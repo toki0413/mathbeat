@@ -19,6 +19,13 @@ import {
 } from './science/signal';
 import { parseScienceFile, ParseResult } from './science/parser';
 import { exportScience, patternToMidi, patternToCSV, patternToJSON } from './science/export';
+import {
+  SCIENCE_DEEP_SAMPLES,
+  SCIENCE_DEEP_SCHEMA,
+  SCIENCE_DEEP_TYPE_NAMES,
+  SCIENCE_DEEP_MAPPINGS,
+  SCIENCE_DEEP_OPTIONS,
+} from './science-deep';
 
 export const SCIENCE_SAMPLES = {
   dft: {
@@ -587,17 +594,15 @@ export let scienceState: any = {
   whyOpen: false,
 };
 (function initScienceMapping() {
-  for (const type in SCIENCE_MAPPINGS) {
+  const allMappings = { ...SCIENCE_MAPPINGS, ...SCIENCE_DEEP_MAPPINGS } as Record<string, { id: string }[]>;
+  for (const type in allMappings) {
     scienceState.mapping[type] = {};
-    (SCIENCE_MAPPINGS as Record<string, { id: string }[]>)[type].forEach(
-      (m: { id: string }, i: number) => (scienceState.mapping[type][m.id] = i < 3)
-    );
+    allMappings[type].forEach((m, i) => (scienceState.mapping[type][m.id] = i < 3));
   }
-  for (const type in SCIENCE_OPTIONS) {
+  const allOptions = { ...SCIENCE_OPTIONS, ...SCIENCE_DEEP_OPTIONS } as Record<string, { key: string; def: number }[]>;
+  for (const type in allOptions) {
     const opts: Record<string, number> = {};
-    (SCIENCE_OPTIONS as Record<string, { key: string; def: number }[]>)[type].forEach(
-      (o: { key: string; def: number }) => (opts[o.key] = o.def)
-    );
+    allOptions[type].forEach((o) => (opts[o.key] = o.def));
     scienceState.options[type] = opts;
   }
 })();
@@ -610,7 +615,13 @@ export function openScienceMode() {
 }
 export function selectScienceType(type: string) {
   scienceState.type = type;
-  scienceState.data = JSON.parse(JSON.stringify((SCIENCE_SAMPLES as Record<string, any>)[type]));
+  // Check deep samples first, then original
+  const deepData = (SCIENCE_DEEP_SAMPLES as Record<string, any>)[type];
+  if (deepData) {
+    scienceState.data = JSON.parse(JSON.stringify(deepData));
+  } else {
+    scienceState.data = JSON.parse(JSON.stringify((SCIENCE_SAMPLES as Record<string, any>)[type]));
+  }
   goScienceStep('data');
   renderScienceData();
   updateScienceTypeUI();
@@ -637,10 +648,18 @@ export function updateScienceTypeUI() {
       (b as HTMLElement).classList.toggle('active', (b as HTMLElement).dataset.type === scienceState.type)
     );
   const nameEl = document.getElementById('scienceTypeName');
-  if (nameEl) nameEl.textContent = SCIENCE_TYPE_NAMES[scienceState.type as keyof typeof SCIENCE_TYPE_NAMES];
+  if (nameEl) nameEl.textContent =
+    SCIENCE_TYPE_NAMES[scienceState.type as keyof typeof SCIENCE_TYPE_NAMES] ||
+    SCIENCE_DEEP_TYPE_NAMES[scienceState.type as keyof typeof SCIENCE_DEEP_TYPE_NAMES] ||
+    scienceState.type;
 }
 export function loadScienceSample() {
-  scienceState.data = JSON.parse(JSON.stringify((SCIENCE_SAMPLES as Record<string, any>)[scienceState.type]));
+  const deepData = (SCIENCE_DEEP_SAMPLES as Record<string, any>)[scienceState.type];
+  if (deepData) {
+    scienceState.data = JSON.parse(JSON.stringify(deepData));
+  } else {
+    scienceState.data = JSON.parse(JSON.stringify((SCIENCE_SAMPLES as Record<string, any>)[scienceState.type]));
+  }
   renderScienceData();
   showScienceUploadStatus('已加载示例数据', 'success');
 }
@@ -718,7 +737,11 @@ export function parseScienceTextComplete(text: string, ext: string, f: File) {
       showScienceUploadStatus(msg, 'success');
     } else {
       showScienceUploadStatus(
-        '数据格式不匹配。期望：' + SCIENCE_SCHEMA[scienceState.type as keyof typeof SCIENCE_SCHEMA],
+        '数据格式不匹配。期望：' + (
+          SCIENCE_SCHEMA[scienceState.type as keyof typeof SCIENCE_SCHEMA] ||
+          SCIENCE_DEEP_SCHEMA[scienceState.type as keyof typeof SCIENCE_DEEP_SCHEMA] ||
+          'JSON'
+        ),
         'error'
       );
     }
@@ -793,7 +816,10 @@ export function validateScienceData(d: any) {
 }
 export function renderScienceData() {
   updateScienceTypeUI();
-  const schema = SCIENCE_SCHEMA[scienceState.type as keyof typeof SCIENCE_SCHEMA];
+  const schema =
+    SCIENCE_SCHEMA[scienceState.type as keyof typeof SCIENCE_SCHEMA] ||
+    SCIENCE_DEEP_SCHEMA[scienceState.type as keyof typeof SCIENCE_DEEP_SCHEMA] ||
+    'JSON';
   const help = document.getElementById('scienceSchemaHelp');
   if (help) help.innerHTML = '<b>期望格式：</b><code>' + schema + '</code>';
   const info = document.getElementById('scienceDataInfo');
@@ -803,9 +829,11 @@ export function renderScienceData() {
       '<b>名称：</b>' +
       (d.name || '未命名') +
       '<br><b>类型：</b>' +
-      SCIENCE_TYPE_NAMES[scienceState.type as keyof typeof SCIENCE_TYPE_NAMES] +
-      '<br><b>样本数：</b>' +
-      scienceSampleCount(d);
+      (SCIENCE_TYPE_NAMES[scienceState.type as keyof typeof SCIENCE_TYPE_NAMES] ||
+        SCIENCE_DEEP_TYPE_NAMES[scienceState.type as keyof typeof SCIENCE_DEEP_TYPE_NAMES] ||
+        scienceState.type) +
+       '<br><b>样本数：</b>' +
+       scienceSampleCount(d);
   const nameEl = document.getElementById('scienceDataName');
   if (nameEl) nameEl.textContent = d.name || '示例数据';
   drawScienceDataCanvas();
@@ -995,7 +1023,8 @@ export function drawScienceComposeCanvas() {
 export function renderScienceMappings() {
   const el = document.getElementById('scienceMappingList');
   if (!el) return;
-  el.innerHTML = (SCIENCE_MAPPINGS as Record<string, { id: string; title: string; desc: string }[]>)[scienceState.type]
+  const allMappings = { ...SCIENCE_MAPPINGS, ...SCIENCE_DEEP_MAPPINGS } as Record<string, { id: string; title: string; desc: string }[]>;
+  el.innerHTML = (allMappings[scienceState.type] || [])
     .map(
       (m: { id: string; title: string; desc: string }, i: number) =>
         '<div class="science-mapping-card ' +
@@ -1024,7 +1053,7 @@ export function toggleScienceWhyPanel() {
   const visible = el.style.display !== 'none';
   el.style.display = visible ? 'none' : 'block';
   if (!visible)
-    el.innerHTML = (SCIENCE_MAPPINGS as Record<string, { id: string; title: string; desc: string }[]>)[
+    el.innerHTML = (({ ...SCIENCE_MAPPINGS, ...SCIENCE_DEEP_MAPPINGS }) as Record<string, { id: string; title: string; desc: string }[]>)[
       scienceState.type
     ]
       .map((m: { title: string; desc: string }) => '<b>' + m.title + '</b><br>' + m.desc)
@@ -1033,9 +1062,8 @@ export function toggleScienceWhyPanel() {
 export function renderScienceKnobs() {
   const el = document.getElementById('scienceKnobs');
   if (!el) return;
-  el.innerHTML = (SCIENCE_OPTIONS as Record<string, { key: string; label: string; min: number; max: number; def: number; unit: string }[]>)[
-    scienceState.type
-  ]
+  const allOpts = { ...SCIENCE_OPTIONS, ...SCIENCE_DEEP_OPTIONS } as Record<string, { key: string; label: string; min: number; max: number; def: number; unit: string }[]>;
+  el.innerHTML = (allOpts[scienceState.type] || [])
     .map(
       (o: { key: string; label: string; min: number; max: number; def: number; unit: string }) =>
         '<div class="science-knob-group"><div class="science-knob-label"><span>' +
@@ -1062,7 +1090,8 @@ export function updateScienceOption(key: string, val: string) {
   scienceState.options[scienceState.type][key] = num;
   const el = document.getElementById('sciVal_' + key);
   if (el) {
-    const opt = (SCIENCE_OPTIONS as Record<string, { key: string; unit: string }[]>)[scienceState.type].find(
+    const allOpts2 = { ...SCIENCE_OPTIONS, ...SCIENCE_DEEP_OPTIONS } as Record<string, { key: string; unit: string }[]>;
+    const opt = (allOpts2[scienceState.type] || []).find(
       (x: { key: string }) => x.key === key
     );
     el.textContent = num + (opt ? opt.unit : '');
@@ -1370,6 +1399,196 @@ export function regenerateScienceMusic() {
       if (map.binary && i % 2 === 0) row[3] = 1;
       pattern.push(row);
     }
+  } else if (type === 'crystal') {
+    // 晶体点阵：声子频率 → 音高，对称操作 → 和声变换，缺陷 → 装饰音
+    const phonons = (d.phonons || []) as number[];
+    const basis = (d.basis || []) as { x: number; y: number; z: number }[];
+    const n = Math.min(Math.max(phonons.length, basis.length, 8), 32);
+    const pmax = Math.max.apply(null, phonons) || 20;
+    const pmin = Math.min.apply(null, phonons) || 0;
+    const pspan = pmax - pmin || 1;
+    const root = opts.rootPitch || 0;
+    for (let i = 0; i < n; i++) {
+      const row = [0, 0, 0, 0];
+      const ph = phonons[i % phonons.length] || 0;
+      const phNorm = (ph - pmin) / pspan;
+      // 声学支（低频）→ 低音区，光学支（高频）→ 高音区
+      const semitone = (root + Math.floor(phNorm * 24)) % 36;
+      row[1] = baseFreq * Math.pow(2, semitone / 12);
+      if (map.phonon) row[2] = 0.3 + phNorm * 0.5;
+      else row[2] = 0.4;
+      // 对称操作：相邻原子坐标的对称变换对应和弦转位
+      if (map.symop && i > 0) {
+        const prev = phonons[(i - 1) % phonons.length] || 0;
+        const inv = pmax - prev + pmin; // 倒影对称
+        const invNorm = (inv - pmin) / pspan;
+        row[1] = baseFreq * Math.pow(2, ((root + Math.floor(invNorm * 24)) % 36) / 12);
+      }
+      if (map.bravais && i % 7 === 0) row[0] = 1; // 格子平移周期 = 音阶循环点
+      if (map.pointgroup) {
+        // 对称约束的音程：仅允许 1,3,5,7 半音
+        const allowed = [0, 3, 5, 7];
+        const idx = allowed[Math.floor(phNorm * allowed.length) % allowed.length];
+        row[1] = baseFreq * Math.pow(2, ((root + idx) % 36) / 12);
+      }
+      if (map.basis) {
+        // 基矢长度比 → 基础音程
+        const atom = basis[i % basis.length] || { x: 0, y: 0, z: 0 };
+        const dist = Math.sqrt(atom.x * atom.x + atom.y * atom.y + atom.z * atom.z);
+        row[1] *= 1 + (dist - 0.5) * (opts.modeComplex / 1000);
+      }
+      if (map.defect && Math.random() < (opts.ornamentRatio / 100)) row[3] = 1;
+      if (i % Math.max(1, Math.floor(n / (opts.rhythmDensity / 20 || 1))) === 0) row[0] = 1;
+      pattern.push(row);
+    }
+  } else if (type === 'quantum') {
+    // 量子波函数：径向概率 → 音高包络，角度分布 → 声像，节点 → 休止
+    const radial = (d.radial || []) as number[];
+    const angular = (d.angular || []) as number[];
+    const n = Math.min(radial.length, 32);
+    const rmax = Math.max.apply(null, radial) || 1;
+    const range = opts.pitchRange || 18;
+    const overtoneN = opts.overtoneCount || 2;
+    const restP = opts.restProb / 100;
+    for (let i = 0; i < n; i++) {
+      const row = [0, 0, 0, 0];
+      const r = radial[i] || 0;
+      const rNorm = r / rmax; // 径向概率归一化
+      // 本征态 → 自然泛音列：基频 × (k+1)
+      const harmonicIdx = i % (overtoneN + 1);
+      const freq = baseFreq * (harmonicIdx + 1) * Math.pow(2, (rNorm * range) / 12);
+      if (map.eigenstate) row[1] = freq;
+      else row[1] = baseFreq * Math.pow(2, (rNorm * range) / 12);
+      // 量子数 n → 八度
+      if (map.n) row[1] *= Math.pow(2, (d.n - 3) || 0);
+      // 量子数 l → 泛音构成（音色明暗）
+      if (map.l) row[2] = 0.2 + rNorm * 0.4 + (d.l / 10);
+      else row[2] = 0.3 + rNorm * 0.4;
+      // 量子数 m → 声像（用 velocity 模拟）
+      if (map.m) row[2] *= 1 + (d.m / 10);
+      // 波函数节点 → 休止
+      if (map.node && rNorm < 0.15) {
+        row[1] = 0;
+        row[2] = 0;
+      } else if (map.node && Math.random() < restP) {
+        row[1] = 0;
+        row[2] = 0;
+      }
+      // 能级跃迁 → 和弦进行
+      if (map.transition && i > 0) {
+        const tension = opts.tension / 100;
+        const prevR = (radial[i - 1] || 0) / rmax;
+        const delta = Math.abs(rNorm - prevR);
+        if (delta > 0.3 * tension) row[0] = 1; // 大跃迁 = 强拍
+      }
+      // 角度分布影响节奏
+      const aNorm = angular[i % angular.length] || 0;
+      if (aNorm > 0.5) row[3] = 1;
+      pattern.push(row);
+    }
+  } else if (type === 'seismic') {
+    // 地震波：P 波 → 快节奏动机，S 波 → 慢和弦，面波 → 持续低音
+    const pWave = (d.pWave || []) as number[];
+    const sWave = (d.sWave || []) as number[];
+    const surface = (d.surface || []) as number[];
+    const n = Math.min(Math.max(pWave.length, sWave.length, surface.length), 32);
+    const sMax = Math.max.apply(null, surface) || 1;
+    const bpm = opts.pTempo || 140;
+    const beatEvery = Math.max(1, Math.round(16 * 120 / bpm));
+    for (let i = 0; i < n; i++) {
+      const row = [0, 0, 0, 0];
+      // P 波 → 快节奏动机（高频短促）
+      const pArrival = pWave[i] || 0;
+      if (map.pwave && i % Math.max(1, Math.floor(beatEvery / 2)) === 0) {
+        row[1] = baseFreq * 2 * Math.pow(2, (pArrival % 12) / 12);
+        row[2] = 0.3 + (opts.dynRange / 200);
+        row[0] = 1;
+      }
+      // S 波 → 慢节奏和弦层
+      const sArrival = sWave[i] || 0;
+      if (map.swave) {
+        const chordDensity = opts.sChordDensity / 100;
+        if (Math.random() < chordDensity) {
+          row[1] = baseFreq * Math.pow(2, (sArrival % 7) / 12);
+          row[2] += 0.25;
+        }
+      }
+      // 面波 → 持续低音
+      const amp = surface[i] || 0;
+      if (map.surface) {
+        const ampNorm = amp / sMax;
+        const bassFreq = baseFreq * 0.25 * (1 + ampNorm * 0.5);
+        row[1] = row[1] || bassFreq;
+        row[2] += (opts.surfaceBass / 100) * ampNorm * 0.4;
+      }
+      // 震级 → 力度峰值
+      if (map.magnitude) {
+        const magNorm = (d.magnitude || 5) / 10;
+        row[2] = Math.min(1, row[2] + magNorm * (opts.dynRange / 100) * 0.3);
+      }
+      // 震源深度 → 低频厚度
+      if (map.depth && (d.depth || 0) > 20) {
+        row[1] = row[1] ? row[1] * 0.8 : baseFreq * 0.2;
+      }
+      // 频谱 → 音色
+      if (map.spectrum && i % 4 === 0) row[3] = 1;
+      pattern.push(row);
+    }
+  } else if (type === 'eeg') {
+    // 脑电波：5 个频段 → 5 个声部，α 为主旋律
+    const bands = d.bands || {};
+    const delta = (bands.delta || []) as number[];
+    const theta = (bands.theta || []) as number[];
+    const alpha = (bands.alpha || []) as number[];
+    const beta = (bands.beta || []) as number[];
+    const gamma = (bands.gamma || []) as number[];
+    const n = Math.min(Math.max(delta.length, alpha.length), 32);
+    const aMax = Math.max.apply(null, alpha) || 1;
+    const alphaRange = opts.alphaRange || 12;
+    const betaOrn = opts.betaOrnament / 100;
+    const gammaBright = opts.gammaBrightness / 100;
+    const balance = opts.bandBalance / 100;
+    for (let i = 0; i < n; i++) {
+      const row = [0, 0, 0, 0];
+      const aVal = alpha[i] || 0;
+      const aNorm = aVal / aMax;
+      // α 波 → 中音旋律（主旋律）
+      if (map.alpha) {
+        const semitone = Math.floor(aNorm * alphaRange);
+        row[1] = baseFreq * Math.pow(2, semitone / 12);
+        row[2] = 0.3 + aNorm * 0.5;
+      }
+      // δ 波 → 低音踏板
+      if (map.delta) {
+        const dVal = delta[i] || 0;
+        row[1] = row[1] || baseFreq * 0.25;
+        row[2] += dVal * 0.15 * balance;
+        if (i % 8 === 0) row[0] = 1;
+      }
+      // θ 波 → 低中音和声
+      if (map.theta) {
+        const tVal = theta[i] || 0;
+        row[1] = row[1] ? row[1] * 1.2 : baseFreq * 0.5;
+        row[2] += tVal * 0.1 * balance;
+      }
+      // β 波 → 高音装饰
+      if (map.beta) {
+        const bVal = beta[i] || 0;
+        if (Math.random() < bVal * betaOrn) {
+          row[1] *= 1.5; // 高五度装饰
+          row[3] = 1;
+        }
+      }
+      // γ 波 → 极高频泛音
+      if (map.gamma) {
+        const gVal = gamma[i] || 0;
+        row[2] += gVal * gammaBright * 0.2;
+        if (gVal > 0.2) row[1] *= (1 + gammaBright * 0.3);
+      }
+      // 脑区 → 声部布局（用节奏区分）
+      if (map.region && i % d.channels === 0) row[0] = 1;
+      pattern.push(row);
+    }
   }
   scienceState.pattern = applySignalEnhancements(pattern, scienceState.type, scienceState.data, opts);
   renderSciencePianoRoll();
@@ -1584,7 +1803,10 @@ export function animateScienceParticles() {
 }
 export function saveScienceComposition() {
   const name =
-    (scienceState.data.name || SCIENCE_TYPE_NAMES[scienceState.type as keyof typeof SCIENCE_TYPE_NAMES]) +
+    (scienceState.data.name ||
+      SCIENCE_TYPE_NAMES[scienceState.type as keyof typeof SCIENCE_TYPE_NAMES] ||
+      SCIENCE_DEEP_TYPE_NAMES[scienceState.type as keyof typeof SCIENCE_DEEP_TYPE_NAMES] ||
+      scienceState.type) +
     ' ' +
     new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
   const comp = {
@@ -1619,7 +1841,7 @@ export function renderScienceCompositionList() {
           '<div class="science-composition-item"><div><div class="name">' +
           escapeHtml(c.name) +
           '</div><div class="meta">' +
-          (SCIENCE_TYPE_NAMES as Record<string, string>)[c.type] +
+          ((({ ...SCIENCE_TYPE_NAMES, ...SCIENCE_DEEP_TYPE_NAMES }) as Record<string, string>)[c.type] || c.type) +
           ' · ' +
           new Date(c.date).toLocaleDateString('zh-CN') +
           '</div></div><div class="actions"><button style="background:var(--science);color:#fff" data-action="loadScienceComposition" data-args=\'[' +
@@ -1662,7 +1884,10 @@ export function openComposerWithScience() {
   window.location.href = 'composer.html';
 }
 export function shareScience() {
-  const typeName = SCIENCE_TYPE_NAMES[scienceState.type as keyof typeof SCIENCE_TYPE_NAMES] || '';
+  const typeName =
+    SCIENCE_TYPE_NAMES[scienceState.type as keyof typeof SCIENCE_TYPE_NAMES] ||
+    SCIENCE_DEEP_TYPE_NAMES[scienceState.type as keyof typeof SCIENCE_DEEP_TYPE_NAMES] ||
+    scienceState.type;
   const text = t('science.share_text').replace('{type}', typeName);
   if (navigator.share) {
     navigator.share({ title: t('science.title'), text: text, url: location.href });
@@ -1677,7 +1902,10 @@ export function downloadScienceExport(format: 'midi' | 'json' | 'csv') {
   if (!scienceState.pattern || scienceState.pattern.length === 0) regenerateScienceMusic();
   const payload = {
     type: scienceState.type,
-    name: scienceState.data.name || SCIENCE_TYPE_NAMES[scienceState.type as keyof typeof SCIENCE_TYPE_NAMES],
+    name: scienceState.data.name ||
+      SCIENCE_TYPE_NAMES[scienceState.type as keyof typeof SCIENCE_TYPE_NAMES] ||
+      SCIENCE_DEEP_TYPE_NAMES[scienceState.type as keyof typeof SCIENCE_DEEP_TYPE_NAMES] ||
+      scienceState.type,
     data: scienceState.data,
     pattern: scienceState.pattern,
     options: scienceState.options[scienceState.type],

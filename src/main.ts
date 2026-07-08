@@ -269,6 +269,7 @@ import * as uiRender from './ui-render';
 import * as gameEngine from './game-engine';
 import * as dailyModule from './daily';
 import * as scienceModule from './science';
+import * as scienceDeep from './science-deep';
 import * as materiomusic from './materiomusic';
 import * as utils from './utils';
 import * as world1 from './worlds/world1';
@@ -553,6 +554,9 @@ const handlers = {
   openScaleLab: materiomusic.openScaleLab,
   openProteinMode: materiomusic.openProteinMode,
   openWebMode: materiomusic.openWebMode,
+  // science-deep (fracture/flame materiomusic)
+  openFractureMode: scienceDeep.openFractureMode,
+  openFlameMode: scienceDeep.openFlameMode,
   // sample-library globals
   MATH_ROCK_SAMPLES: MATH_ROCK_SAMPLES,
   REAL_MATH_ROCK_SAMPLES: REAL_MATH_ROCK_SAMPLES,

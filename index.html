@@ -2553,6 +2553,36 @@
                 <div class="science-mode-name">蜘蛛网声化</div>
                 <div class="science-mode-sub">图结构→乐器</div>
               </div>
+              <div class="science-mode-card" onclick="selectScienceType('crystal')">
+                <div class="science-mode-emoji">💎</div>
+                <div class="science-mode-name">晶体点阵</div>
+                <div class="science-mode-sub">布拉维格子↔音阶</div>
+              </div>
+              <div class="science-mode-card" onclick="selectScienceType('quantum')">
+                <div class="science-mode-emoji">⚛️</div>
+                <div class="science-mode-name">量子波函数</div>
+                <div class="science-mode-sub">本征态↔泛音列</div>
+              </div>
+              <div class="science-mode-card" onclick="selectScienceType('seismic')">
+                <div class="science-mode-emoji">🌋</div>
+                <div class="science-mode-name">地震波</div>
+                <div class="science-mode-sub">P/S波↔节奏</div>
+              </div>
+              <div class="science-mode-card" onclick="selectScienceType('eeg')">
+                <div class="science-mode-emoji">🧠</div>
+                <div class="science-mode-name">脑电波</div>
+                <div class="science-mode-sub">δθαβγ↔五声部</div>
+              </div>
+              <div class="science-mode-card" onclick="openFractureMode()">
+                <div class="science-mode-emoji">⚡</div>
+                <div class="science-mode-name">断裂声化</div>
+                <div class="science-mode-sub">应力场→音符(论文§6.1)</div>
+              </div>
+              <div class="science-mode-card" onclick="openFlameMode()">
+                <div class="science-mode-emoji">🔥</div>
+                <div class="science-mode-name">火焰动力学</div>
+                <div class="science-mode-sub">流体热力→节奏(论文Fig1C)</div>
+              </div>
             </div>
           </div>
           <div class="science-card">
@@ -2571,6 +2601,10 @@
               <div class="science-type-btn" data-type="xrd" onclick="selectScienceType('xrd')">XRD</div>
               <div class="science-type-btn" data-type="dna" onclick="selectScienceType('dna')">DNA</div>
               <div class="science-type-btn" data-type="pulsar" onclick="selectScienceType('pulsar')">Pulsar</div>
+              <div class="science-type-btn" data-type="crystal" onclick="selectScienceType('crystal')">Crystal</div>
+              <div class="science-type-btn" data-type="quantum" onclick="selectScienceType('quantum')">Quantum</div>
+              <div class="science-type-btn" data-type="seismic" onclick="selectScienceType('seismic')">Seismic</div>
+              <div class="science-type-btn" data-type="eeg" onclick="selectScienceType('eeg')">EEG</div>
             </div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px">
               <button class="science-btn secondary" onclick="loadScienceSample()">使用示例数据</button>
@@ -3012,6 +3046,54 @@
         <div id="webViz" style="text-align:center;margin-bottom:12px"></div>
         <div id="webInfo" style="margin-bottom:12px"></div>
         <button class="verify-btn" id="webPlayBtn" data-action="toggleWebPlay" style="width:100%">▶ 播放振动</button>
+      </div>
+    </div>
+
+    <!-- Fracture Sonification Screen -->
+    <div id="fractureScreen" class="screen">
+      <div class="ach-header">
+        <span class="back-btn" data-action="closeFractureMode">←</span>
+        <div style="font-size:18px;font-weight:800">⚡ 断裂声化</div>
+        <span></span>
+      </div>
+      <div style="padding:12px;overflow-y:auto;max-height:calc(100vh - 60px)">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="science-type-btn" data-action="loadFractureSample" data-args='["brittle"]'>脆性断裂</button>
+          <button class="science-type-btn" data-action="loadFractureSample" data-args='["ductile"]'>韧性断裂</button>
+          <button class="science-type-btn" data-action="loadFractureSample" data-args='["fatigue"]'>疲劳断裂</button>
+        </div>
+        <div id="fractureViz" style="text-align:center;margin-bottom:12px"></div>
+        <div id="fractureInfo" style="margin-bottom:12px"></div>
+        <button class="verify-btn" data-action="playFracture" style="width:100%;margin-bottom:8px">▶ 播放应力场音乐</button>
+        <div style="background:var(--bg2);border-radius:8px;padding:10px;font-size:12px;color:var(--muted);line-height:1.6">
+          <strong style="color:var(--ink)">论文关联</strong>：Buehler (2025) §6.1 将裂纹尖端应力场分布映射为音符序列。
+          应力强度决定音高和力度，距裂纹尖端距离决定触发时机——近处先发声，远处后发声，
+          模拟裂纹扩展时弹性波从尖端向外辐射的物理过程。
+        </div>
+      </div>
+    </div>
+
+    <!-- Flame Dynamics Screen -->
+    <div id="flameScreen" class="screen">
+      <div class="ach-header">
+        <span class="back-btn" data-action="closeFlameMode">←</span>
+        <div style="font-size:18px;font-weight:800">🔥 火焰动力学</div>
+        <span></span>
+      </div>
+      <div style="padding:12px;overflow-y:auto;max-height:calc(100vh - 60px)">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="science-type-btn" data-action="loadFlameSample" data-args='["laminar"]'>层流火焰</button>
+          <button class="science-type-btn" data-action="loadFlameSample" data-args='["turbulent"]'>湍流火焰</button>
+          <button class="science-type-btn" data-action="loadFlameSample" data-args='["detonation"]'>爆轰</button>
+        </div>
+        <div id="flameViz" style="text-align:center;margin-bottom:12px"></div>
+        <div id="flameInfo" style="margin-bottom:12px"></div>
+        <button class="verify-btn" data-action="playFlame" style="width:100%;margin-bottom:8px">▶ 播放火焰音乐</button>
+        <div style="background:var(--bg2);border-radius:8px;padding:10px;font-size:12px;color:var(--muted);line-height:1.6">
+          <strong style="color:var(--ink)">论文关联</strong>：Buehler (2025) Fig 1C 展示了火焰的流体和热力动力学产生节奏与波动。
+          温度映射为音高，闪烁频率映射为BPM，涡量映射为装饰音密度——火焰不仅是物理现象，
+          更是生成算法，是物质与音乐共享振动语法的活体实例。
+        </div>
       </div>
     </div>
 

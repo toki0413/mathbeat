@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 900" width="480" height="900">
+  <defs>
+    <linearGradient id="b2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a0a0e"/>
+      <stop offset="100%" stop-color="#0d0507"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="900" fill="url(#b2)"/>
+  <!-- 对称轴线 -->
+  <line x1="240" y1="0" x2="240" y2="900" stroke="#E8587A" stroke-width="1" opacity="0.05"/>
+  <!-- 12音圆环暗示 -->
+  <circle cx="240" cy="450" r="150" fill="none" stroke="#E8587A" stroke-width="0.5" opacity="0.04"/>
+  <circle cx="240" cy="450" r="100" fill="none" stroke="#E8587A" stroke-width="0.5" opacity="0.03"/>
+  <!-- 镜像弧线 -->
+  <path d="M 60 200 Q 240 100 420 200" fill="none" stroke="#E8587A" stroke-width="1" opacity="0.04"/>
+  <path d="M 60 700 Q 240 800 420 700" fill="none" stroke="#E8587A" stroke-width="1" opacity="0.04"/>
+</svg>

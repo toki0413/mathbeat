@@ -1,0 +1,3124 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=480, initial-scale=1.0" />
+    <title>数律 MathBeat</title>
+    <link rel="manifest" href="manifest.json" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      :root {
+        --bg: #fff8f0;
+        --card: #ffffff;
+        --trackA: #ff8c42;
+        --trackB: #e8587a;
+        --both: #ffd166;
+        --success: #7bc67e;
+        --error: #e85d5d;
+        --text: #2d2d3a;
+        --dim: #8e8ea0;
+        --radius: 18px;
+        --w1: #ff8c42;
+        --w2: #e8587a;
+        --w3: #7c6bff;
+        --w4: #4ecdc4;
+        --w5: #ffd166;
+        --w6: #7bc67e;
+        --w7: #9b5de5;
+        --w8: #4ecdc4;
+        --science: #9b59b6;
+        --science2: #c39bd3;
+      }
+      html,
+      body {
+        width: 480px;
+        height: 900px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        background: var(--bg);
+        font-family:
+          system-ui,
+          -apple-system,
+          'Segoe WPC',
+          sans-serif;
+        color: var(--text);
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      body {
+        padding-bottom: 30px;
+      }
+      #particleCanvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 480px;
+        height: 900px;
+        pointer-events: none;
+        z-index: 999;
+      }
+      #loadingScreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 480px;
+        height: 900px;
+        z-index: 2000;
+        background: linear-gradient(135deg, #fff0e0, #ffe4d4, #ffd6c8);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.5s;
+      }
+      #loadingScreen.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .loading-title {
+        font-size: 44px;
+        font-weight: 900;
+        letter-spacing: 4px;
+        background: linear-gradient(135deg, var(--trackA), var(--trackB));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+      }
+      .loading-sub {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--dim);
+        letter-spacing: 6px;
+        margin-bottom: 32px;
+      }
+      .loading-bar-wrap {
+        width: 280px;
+        height: 8px;
+        background: rgba(0, 0, 0, 0.08);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .loading-bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(135deg, var(--trackA), var(--trackB));
+        border-radius: 4px;
+        transition: width 0.3s;
+      }
+      .loading-text {
+        margin-top: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--dim);
+      }
+      .screen {
+        display: none;
+        opacity: 0;
+        transform: translateX(30px);
+        transition:
+          opacity 0.35s,
+          transform 0.35s;
+      }
+      .screen.active {
+        display: block;
+        opacity: 1;
+        transform: translateX(0);
+      }
+      .screen.slide-out {
+        opacity: 0;
+        transform: translateX(-30px);
+      }
+      .home-header {
+        text-align: center;
+        padding: 16px 16px 6px;
+      }
+      .home-title {
+        font-size: 36px;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--trackA), var(--trackB));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .home-sub {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--dim);
+        margin-top: 2px;
+        letter-spacing: 3px;
+      }
+      .home-stats {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        margin: 8px 0;
+      }
+      .stat-pill {
+        background: var(--card);
+        border-radius: 20px;
+        padding: 4px 14px;
+        font-size: 13px;
+        font-weight: 700;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      }
+      .stat-pill span {
+        color: var(--trackA);
+      }
+      .daily-challenge {
+        margin: 0 16px 12px;
+        background: linear-gradient(135deg, var(--trackA), var(--trackB));
+        border-radius: var(--radius);
+        padding: 14px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(232, 93, 93, 0.2);
+        transition: transform 0.2s;
+      }
+      .daily-challenge:active {
+        transform: scale(0.98);
+      }
+      .daily-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .daily-icon {
+        font-size: 28px;
+      }
+      .daily-title {
+        font-size: 18px;
+        font-weight: 800;
+        color: #fff;
+      }
+      .daily-sub {
+        font-size: 12px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.85);
+        margin-top: 2px;
+      }
+      .daily-status {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .daily-challenge.done {
+        opacity: 0.85;
+        background: linear-gradient(135deg, var(--success), #4ecdc4);
+      }
+      #worldGrid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        padding: 0 16px 16px;
+      }
+      .skeleton-card {
+        width: calc(50% - 6px);
+        height: 120px;
+        border-radius: var(--radius);
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: skeleton-shimmer 1.5s infinite;
+      }
+      @keyframes skeleton-shimmer {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+      .world-card {
+        background: var(--card);
+        border-radius: var(--radius);
+        padding: 14px;
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+        position: relative;
+        overflow: hidden;
+      }
+      .world-card:active {
+        transform: scale(0.96);
+      }
+      .world-card.locked {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+      .world-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .world-emoji {
+        font-size: 28px;
+      }
+      .world-num {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--dim);
+      }
+      .world-name {
+        font-size: 18px;
+        font-weight: 800;
+        margin-top: 4px;
+      }
+      .world-sub {
+        font-size: 12px;
+        color: var(--dim);
+        margin-top: 2px;
+      }
+      .world-stars {
+        font-size: 13px;
+        margin-top: 6px;
+        font-weight: 700;
+      }
+      .world-stars .si {
+        color: var(--trackA);
+      }
+      .world-lock {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 36px;
+        opacity: 0.7;
+      }
+      .world-progress {
+        height: 4px;
+        background: rgba(0, 0, 0, 0.08);
+        border-radius: 2px;
+        margin-top: 6px;
+      }
+      .world-progress-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: width 0.3s;
+      }
+      .home-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 0 16px 16px;
+      }
+      .action-card {
+        border-radius: var(--radius);
+        padding: 14px;
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        position: relative;
+        overflow: hidden;
+        color: #fff;
+      }
+      .action-card:active {
+        transform: scale(0.97);
+      }
+      .action-card .action-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .action-card .action-icon {
+        font-size: 30px;
+      }
+      .action-card .action-name {
+        font-size: 20px;
+        font-weight: 900;
+        margin-top: 4px;
+      }
+      .action-card .action-sub {
+        font-size: 13px;
+        font-weight: 600;
+        opacity: 0.9;
+        margin-top: 2px;
+      }
+      .action-card .action-lock {
+        font-size: 12px;
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 2px 8px;
+        border-radius: 10px;
+        margin-top: 6px;
+        display: inline-block;
+      }
+      .action-science {
+        background: linear-gradient(135deg, var(--science), var(--science2));
+      }
+      .action-free {
+        background: linear-gradient(135deg, #e8587a, #ffb347);
+      }
+      .action-composer {
+        background: linear-gradient(135deg, #5dade2, #85c1e9);
+      }
+      .action-concept {
+        background: linear-gradient(135deg, #7bc67e, #4ecdc4);
+      }
+      .concept-map-wrap {
+        width: 100%;
+        height: 460px;
+        position: relative;
+      }
+      .boss-problem-emoji {
+        font-size: 48px;
+        text-align: center;
+        margin: 4px 0;
+      }
+      .boss-problem-statement {
+        background: rgba(0, 0, 0, 0.04);
+        border-radius: 12px;
+        padding: 12px;
+        margin: 10px 0;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      .boss-problem-statement b {
+        color: var(--w3);
+      }
+      .boss-problem-hint {
+        font-size: 13px;
+        color: var(--dim);
+        line-height: 1.5;
+        margin: 8px 0;
+        padding-left: 14px;
+        border-left: 3px solid var(--w5);
+      }
+      .boss-reward {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--success);
+        margin-top: 8px;
+      }
+      .concept-detail {
+        background: rgba(0, 0, 0, 0.04);
+        border-radius: 12px;
+        padding: 12px;
+        margin-top: 10px;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .concept-detail-title {
+        font-size: 14px;
+        font-weight: 800;
+        margin-bottom: 4px;
+        color: var(--text);
+      }
+      .home-bottom {
+        padding: 8px 16px;
+        text-align: center;
+      }
+      .home-bottom-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--dim);
+        margin-bottom: 6px;
+        letter-spacing: 2px;
+      }
+      .unlock-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        justify-content: center;
+      }
+      .unlock-tag {
+        font-size: 11px;
+        padding: 3px 8px;
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.04);
+        font-weight: 600;
+      }
+      .unlock-tag.locked-tag {
+        opacity: 0.35;
+      }
+      .level-screen-header {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        gap: 10px;
+      }
+      .back-btn {
+        font-size: 22px;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.04);
+      }
+      .level-screen-title {
+        font-size: 20px;
+        font-weight: 800;
+      }
+      .level-screen-sub {
+        font-size: 13px;
+        color: var(--dim);
+      }
+      #levelCards {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 0 16px 16px;
+      }
+      .level-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: var(--card);
+        border-radius: 14px;
+        padding: 12px;
+        cursor: pointer;
+        transition: transform 0.15s;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        position: relative;
+      }
+      .level-card:active {
+        transform: scale(0.97);
+      }
+      .level-card.locked {
+        opacity: 0.45;
+        pointer-events: none;
+      }
+      .level-card-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: 800;
+        color: #fff;
+        flex-shrink: 0;
+      }
+      .level-card-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .level-card-name {
+        font-size: 16px;
+        font-weight: 700;
+      }
+      .level-card-desc {
+        font-size: 12px;
+        color: var(--dim);
+        margin-top: 1px;
+      }
+      .level-card-curriculum {
+        font-size: 11px;
+        color: var(--w3);
+        font-weight: 600;
+        margin-top: 2px;
+      }
+      .level-card-stars {
+        margin-top: 3px;
+        font-size: 14px;
+      }
+      .level-card-stars .s {
+        opacity: 0.3;
+      }
+      .level-card-stars .s.earned {
+        opacity: 1;
+      }
+      .level-card-lock {
+        font-size: 20px;
+        opacity: 0.6;
+      }
+      .boss-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: var(--trackB);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 800;
+        padding: 2px 8px;
+        border-radius: 8px;
+      }
+      .game-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+        background: var(--card);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      .game-header-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .game-back {
+        font-size: 20px;
+        cursor: pointer;
+      }
+      .game-level-pill {
+        font-size: 13px;
+        font-weight: 700;
+        background: rgba(0, 0, 0, 0.06);
+        padding: 3px 10px;
+        border-radius: 10px;
+      }
+      .game-header-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .combo-badge {
+        font-size: 13px;
+        font-weight: 800;
+        color: var(--trackA);
+      }
+      .why-btn {
+        font-size: 13px;
+        font-weight: 700;
+        background: var(--w3);
+        color: #fff;
+        border: none;
+        padding: 4px 10px;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      #gameContent {
+        padding: 12px 16px;
+      }
+      .ctrl-btn {
+        border: none;
+        border-radius: 10px;
+        padding: 6px 14px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        background: rgba(0, 0, 0, 0.06);
+        transition: transform 0.1s;
+      }
+      .ctrl-btn:active {
+        transform: scale(0.92);
+      }
+      .ctrl-btn.play-btn {
+        background: var(--trackA);
+        color: #fff;
+      }
+      .ctrl-btn.speed-btn {
+        font-size: 12px;
+        padding: 4px 10px;
+      }
+      .phrase-canvas-wrap {
+        margin: 8px 0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      }
+      .phrase-canvas-wrap canvas {
+        display: block;
+        width: 100%;
+      }
+      .track-cards {
+        display: flex;
+        gap: 8px;
+        margin: 8px 0;
+      }
+      .track-card {
+        flex: 1;
+        padding: 10px;
+        border-radius: 12px;
+        text-align: center;
+        font-weight: 700;
+        font-size: 14px;
+        transition: transform 0.15s;
+      }
+      .track-card.beat-pulse-a {
+        transform: scale(1.08);
+      }
+      .track-card.beat-pulse-b {
+        transform: scale(1.08);
+      }
+      .controls-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 8px 0;
+        flex-wrap: wrap;
+      }
+      .bpm-group {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .bpm-val {
+        color: var(--trackA);
+      }
+      .challenge-card {
+        background: var(--card);
+        border-radius: 14px;
+        padding: 14px;
+        margin-top: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      }
+      .challenge-q {
+        font-size: 15px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .challenge-input-row {
+        display: flex;
+        gap: 8px;
+      }
+      .challenge-input {
+        flex: 1;
+        border: 2px solid #e8e4de;
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 16px;
+        font-weight: 700;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .challenge-input:focus {
+        border-color: var(--trackA);
+      }
+      .verify-btn {
+        background: var(--trackA);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 8px 16px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .result-msg {
+        margin-top: 8px;
+        font-size: 14px;
+        font-weight: 700;
+        min-height: 20px;
+      }
+      .result-msg.correct {
+        color: var(--success);
+      }
+      .result-msg.wrong {
+        color: var(--error);
+      }
+      .stars-row {
+        margin-top: 6px;
+        font-size: 22px;
+        min-height: 28px;
+      }
+      .next-btn {
+        margin-top: 8px;
+        background: var(--success);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        display: none;
+      }
+      .next-btn.show {
+        display: inline-block;
+      }
+      .interval-circle-wrap {
+        text-align: center;
+      }
+      .interval-canvas-wrap {
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        display: inline-block;
+      }
+      .interval-canvas-wrap canvas {
+        display: block;
+        max-width: 100%;
+      }
+      .interval-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 8px 0;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .interval-slider-wrap {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .interval-slider-wrap input {
+        width: 80px;
+      }
+      .interval-btn {
+        background: var(--w2);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 6px 12px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .interval-btn.active {
+        box-shadow: 0 0 0 3px rgba(232, 88, 122, 0.4);
+      }
+      .interval-play-btn {
+        background: var(--trackA);
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+        cursor: pointer;
+      }
+      .interval-info {
+        font-size: 13px;
+        color: var(--dim);
+        font-weight: 600;
+        margin: 4px 0;
+      }
+      .freq-wrap {
+        padding: 4px 0;
+      }
+      .freq-slider-group {
+        margin: 6px 0;
+      }
+      .freq-slider-label {
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 2px;
+      }
+      .freq-slider-label span {
+        color: var(--w3);
+        font-weight: 800;
+      }
+      .freq-slider {
+        width: 100%;
+        accent-color: var(--w3);
+      }
+      .preset-row {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin: 6px 0;
+      }
+      .preset-btn {
+        background: rgba(124, 107, 255, 0.1);
+        border: 2px solid transparent;
+        border-radius: 10px;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .preset-btn.active {
+        border-color: var(--w3);
+        background: rgba(124, 107, 255, 0.2);
+      }
+      .waveform-wrap {
+        border-radius: 12px;
+        overflow: hidden;
+        margin: 6px 0;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      }
+      .waveform-wrap canvas {
+        display: block;
+        width: 100%;
+      }
+      .beat-freq-display {
+        font-size: 15px;
+        font-weight: 700;
+        text-align: center;
+        margin: 4px 0;
+      }
+      .beat-freq-display b {
+        color: var(--w3);
+      }
+      .freq-play-btn {
+        display: block;
+        margin: 6px auto;
+        background: var(--w3);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 10px 24px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .mod-maze-wrap {
+        text-align: center;
+      }
+      .mod-maze-wrap canvas {
+        border-radius: 14px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        max-width: 100%;
+      }
+      .maze-info {
+        font-size: 14px;
+        font-weight: 700;
+        margin: 6px 0;
+        text-align: center;
+      }
+      .maze-controls {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+        margin: 6px 0;
+      }
+      .maze-prediction {
+        background: var(--card);
+        border-radius: 14px;
+        padding: 14px;
+        margin-top: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      }
+      .maze-prediction label {
+        font-size: 14px;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 6px;
+      }
+      .maze-input-row {
+        display: flex;
+        gap: 6px;
+      }
+      .maze-input {
+        flex: 1;
+        border: 2px solid #e8e4de;
+        border-radius: 10px;
+        padding: 6px 10px;
+        font-size: 15px;
+        font-weight: 700;
+        outline: none;
+      }
+      .maze-input:focus {
+        border-color: var(--w4);
+      }
+      .maze-verify {
+        background: var(--w4);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 6px 14px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .hint-msg {
+        font-size: 12px;
+        color: var(--dim);
+        margin-top: 6px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s;
+      }
+      .hint-msg.show {
+        max-height: 60px;
+      }
+      .poly-wrap {
+        padding: 4px 0;
+      }
+      .poly-track {
+        margin: 4px 0;
+      }
+      .poly-track-label {
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 2px;
+      }
+      .poly-track-cells {
+        display: flex;
+        gap: 3px;
+      }
+      .poly-cell {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.06);
+        transition:
+          background 0.15s,
+          transform 0.15s;
+      }
+      .poly-cell.active-a {
+        background: var(--trackA);
+        transform: scale(1.15);
+      }
+      .poly-cell.active-b {
+        background: var(--trackB);
+        transform: scale(1.15);
+      }
+      .poly-cell.active-c {
+        background: var(--w3);
+        transform: scale(1.15);
+      }
+      .poly-conductor {
+        margin: 8px 0;
+        text-align: center;
+      }
+      .poly-conductor-title {
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+      .poly-conductor-row {
+        display: flex;
+        gap: 2px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .conductor-cell {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        background: rgba(0, 0, 0, 0.06);
+      }
+      .conductor-cell.conductor-active {
+        background: var(--both);
+      }
+      .lcm-card {
+        text-align: center;
+        background: var(--card);
+        border-radius: 14px;
+        padding: 12px;
+        margin: 8px 0;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      }
+      .lcm-text {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--dim);
+      }
+      .lcm-number {
+        font-size: 36px;
+        font-weight: 900;
+        color: var(--w5);
+      }
+      .lcm-formula {
+        font-size: 12px;
+        color: var(--dim);
+      }
+      .workshop-wrap {
+        padding: 4px 0;
+      }
+      .workshop-track {
+        margin: 4px 0;
+        background: var(--card);
+        border-radius: 10px;
+        padding: 8px;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+      }
+      .workshop-track-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+      }
+      .workshop-track-name {
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .workshop-track-cells {
+        display: flex;
+        gap: 2px;
+        flex-wrap: wrap;
+      }
+      .ws-cell {
+        width: 22px;
+        height: 22px;
+        border-radius: 5px;
+        background: rgba(0, 0, 0, 0.06);
+        cursor: pointer;
+        transition:
+          background 0.1s,
+          transform 0.1s;
+      }
+      .ws-cell.on {
+        transform: scale(1.1);
+      }
+      .ws-cell.on.drums {
+        background: var(--trackA);
+      }
+      .ws-cell.on.bass {
+        background: var(--trackB);
+      }
+      .ws-cell.on.melody {
+        background: var(--w3);
+      }
+      .ws-cell.on.chords {
+        background: var(--w6);
+      }
+      .w6-euclidean {
+        margin: 8px 0;
+      }
+      .w6-euclidean label {
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .w6-euclidean input {
+        width: 50px;
+        border: 2px solid #e8e4de;
+        border-radius: 8px;
+        padding: 4px 8px;
+        font-size: 14px;
+        font-weight: 700;
+        outline: none;
+        text-align: center;
+      }
+      .w6-euclidean button {
+        background: var(--w6);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 4px 10px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        margin-left: 4px;
+      }
+
+      /* ===== SEQUENCER ===== */
+      .seq-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin: 10px 0;
+      }
+      .seq-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .seq-label {
+        font-size: 14px;
+        font-weight: 700;
+        width: 42px;
+      }
+      .seq-cells {
+        display: flex;
+        gap: 3px;
+        flex: 1;
+        justify-content: center;
+        overflow-x: auto;
+        padding-bottom: 4px;
+      }
+      .seq-cell {
+        width: 30px;
+        height: 38px;
+        border-radius: 8px;
+        background: #f5f0ea;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        color: #8e8ea0;
+        cursor: pointer;
+        transition:
+          transform 0.1s,
+          background 0.15s;
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+      }
+      .seq-cell:active {
+        transform: scale(0.92);
+      }
+      .seq-cell.disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+        background: #f0ece6;
+      }
+      .seq-cell.active-a {
+        background: #ff8c42;
+        color: #fff;
+      }
+      .seq-cell.active-b {
+        background: #e8587a;
+        color: #fff;
+      }
+      .seq-cell.target {
+        background: #ffd166;
+        color: #2d2d3a;
+        box-shadow: 0 0 0 2px rgba(255, 209, 102, 0.6);
+      }
+      .seq-cell.playhead {
+        box-shadow: 0 0 0 3px var(--text);
+      }
+      .perm-row {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .perm-cell {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        background: #f5f0ea;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 700;
+        color: #2d2d3a;
+        cursor: pointer;
+        transition:
+          transform 0.1s,
+          background 0.15s;
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+      }
+      .perm-cell:active {
+        transform: scale(0.92);
+      }
+      .perm-cell.selected {
+        background: #7c6bff;
+        color: #fff;
+        box-shadow: 0 0 0 2px rgba(124, 107, 255, 0.5);
+      }
+      .perm-cell.playhead {
+        box-shadow: 0 0 0 3px var(--text);
+      }
+
+      /* ===== SCIENCE MODE ===== */
+      #scienceScreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 480px;
+        height: 900px;
+        background: var(--bg);
+        z-index: 90;
+        display: none;
+        flex-direction: column;
+      }
+      #scienceScreen.active {
+        display: flex;
+        opacity: 1;
+        transform: none;
+      }
+      .science-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+        background: var(--card);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        z-index: 10;
+        flex-shrink: 0;
+      }
+      .science-title {
+        font-size: 20px;
+        font-weight: 900;
+        color: var(--science);
+      }
+      .science-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 12px 16px 80px;
+      }
+      .science-section {
+        display: none;
+      }
+      .science-section.active {
+        display: block;
+      }
+      .science-card {
+        background: var(--card);
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      }
+      .science-card-title {
+        font-size: 16px;
+        font-weight: 800;
+        margin-bottom: 10px;
+        color: var(--science);
+      }
+      .science-intro {
+        font-size: 13px;
+        color: var(--dim);
+        line-height: 1.6;
+        margin-bottom: 12px;
+      }
+      .science-mode-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .science-mode-card {
+        background: linear-gradient(135deg, var(--science), var(--science2));
+        border-radius: 14px;
+        padding: 14px;
+        color: #fff;
+        cursor: pointer;
+        transition: transform 0.15s;
+        box-shadow: 0 4px 14px rgba(155, 89, 182, 0.25);
+      }
+      .science-mode-card:active {
+        transform: scale(0.97);
+      }
+      .science-mode-emoji {
+        font-size: 28px;
+        margin-bottom: 6px;
+      }
+      .science-mode-name {
+        font-size: 16px;
+        font-weight: 800;
+      }
+      .science-mode-sub {
+        font-size: 12px;
+        opacity: 0.9;
+        margin-top: 2px;
+      }
+      /* Scale Lab */
+      .scalelab-keyboard { display: flex; gap: 2px; margin: 8px 0; }
+      .scalelab-key { flex: 1; height: 36px; background: var(--bg); border: 1px solid var(--rule); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--muted); }
+      .scalelab-key.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+      .scalelab-info-name { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+      .scalelab-stats { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+      .scalelab-stats div { display: flex; flex-direction: column; align-items: center; }
+      .scalelab-stats span { font-size: 10px; color: var(--muted); }
+      .scalelab-stats strong { font-size: 16px; color: var(--accent); }
+      .scalelab-list-header, .scalelab-row { display: grid; grid-template-columns: 2fr 0.6fr 0.6fr 0.6fr 1fr; gap: 4px; padding: 6px 8px; align-items: center; font-size: 12px; cursor: pointer; }
+      .scalelab-list-header { font-weight: 700; color: var(--muted); border-bottom: 1px solid var(--rule); }
+      .scalelab-row { border-bottom: 1px solid var(--rule); }
+      .scalelab-row:hover { background: var(--bg2); }
+      .scalelab-row.selected { background: rgba(88,166,255,0.15); }
+      .scalelab-row.cultural .scalelab-name { color: var(--accent2); font-weight: 600; }
+      .scalelab-hp-bar { display: inline-block; height: 8px; background: var(--accent); border-radius: 2px; vertical-align: middle; margin-right: 4px; }
+      .scalelab-cell.playing { background: var(--accent); color: #fff; }
+      /* Protein */
+      .protein-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+      .protein-desc { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+      .protein-organism { font-size: 12px; color: var(--accent2); margin-bottom: 8px; }
+      .protein-sequence { display: flex; gap: 1px; align-items: flex-end; height: 60px; padding: 4px; background: var(--bg2); border-radius: 6px; overflow-x: auto; }
+      .protein-cell { flex-shrink: 0; width: 8px; background: var(--accent); border-radius: 2px 2px 0 0; opacity: 0.7; transition: opacity 0.1s; }
+      .protein-cell.playing { opacity: 1; background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+      .protein-composition { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+      .protein-comp-item { font-size: 11px; background: var(--bg); padding: 2px 6px; border-radius: 4px; }
+      .protein-comp-item strong { color: var(--accent); }
+      .protein-comp-title { font-size: 12px; font-weight: 700; margin-top: 8px; margin-bottom: 4px; }
+      .protein-music-info { display: flex; gap: 12px; font-size: 12px; color: var(--muted); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--rule); }
+      .protein-reverse-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+      .protein-reverse-seq { display: flex; flex-wrap: wrap; gap: 4px; }
+      .protein-reverse-aa { display: inline-flex; width: 24px; height: 24px; align-items: center; justify-content: center; background: var(--accent); color: #fff; border-radius: 4px; font-size: 12px; font-weight: 700; }
+      .protein-reverse-full { font-size: 11px; color: var(--muted); margin-top: 6px; word-break: break-all; font-family: monospace; }
+      /* Web */
+      .web-node.vibrating { fill: var(--accent2) !important; r: 8; }
+      .web-name { font-size: 16px; font-weight: 700; }
+      .web-stats { display: flex; gap: 12px; font-size: 12px; color: var(--muted); margin-top: 4px; }
+      .web-desc { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.6; }
+      .science-type-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+      }
+      .science-type-btn {
+        font-size: 13px;
+        font-weight: 700;
+        padding: 6px 12px;
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.05);
+        border: 2px solid transparent;
+        cursor: pointer;
+      }
+      .science-type-btn.active {
+        background: rgba(155, 89, 182, 0.15);
+        border-color: var(--science);
+        color: var(--science);
+      }
+      .science-btn {
+        background: var(--science);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 8px 14px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.1s;
+      }
+      .science-btn:active {
+        transform: scale(0.96);
+      }
+      .science-btn.secondary {
+        background: rgba(155, 89, 182, 0.15);
+        color: var(--science);
+      }
+      .science-file-wrap {
+        position: relative;
+        display: inline-block;
+        overflow: hidden;
+        border-radius: 10px;
+      }
+      .science-file-wrap input {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+      }
+      .science-helper {
+        font-size: 12px;
+        color: var(--dim);
+        line-height: 1.5;
+        margin-top: 8px;
+        background: rgba(0, 0, 0, 0.03);
+        padding: 10px;
+        border-radius: 10px;
+      }
+      .science-helper code {
+        font-family: monospace;
+        background: rgba(155, 89, 182, 0.1);
+        padding: 1px 4px;
+        border-radius: 4px;
+        color: var(--science);
+      }
+      .science-upload-status {
+        display: none;
+        margin-top: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 8px 10px;
+        border-radius: 8px;
+      }
+      .science-upload-status.ok {
+        color: #2e7d32;
+        background: rgba(46, 125, 50, 0.1);
+      }
+      .science-upload-status.err {
+        color: #c62828;
+        background: rgba(198, 40, 40, 0.1);
+      }
+      .science-preview-canvas {
+        border-radius: 12px;
+        overflow: hidden;
+        background: #1a1a2e;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        margin-top: 8px;
+      }
+      .science-preview-canvas canvas {
+        display: block;
+        width: 100%;
+      }
+      .science-stats {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+      .science-stat {
+        flex: 1;
+        min-width: 80px;
+        background: rgba(155, 89, 182, 0.08);
+        border-radius: 10px;
+        padding: 8px;
+        text-align: center;
+      }
+      .science-stat .label {
+        font-size: 11px;
+        color: var(--dim);
+        font-weight: 600;
+      }
+      .science-stat .value {
+        font-size: 18px;
+        font-weight: 900;
+        color: var(--science);
+      }
+      .science-mapping-card {
+        background: rgba(155, 89, 182, 0.06);
+        border: 2px solid transparent;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 10px;
+        transition: all 0.15s;
+      }
+      .science-mapping-card.enabled {
+        border-color: var(--science);
+        background: rgba(155, 89, 182, 0.14);
+      }
+      .science-mapping-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .science-mapping-title {
+        font-size: 15px;
+        font-weight: 800;
+        color: var(--text);
+      }
+      .science-mapping-desc {
+        font-size: 12px;
+        color: var(--dim);
+        line-height: 1.5;
+        margin-top: 4px;
+      }
+      .science-toggle {
+        width: 44px;
+        height: 24px;
+        border-radius: 12px;
+        background: #ddd;
+        position: relative;
+        cursor: pointer;
+        transition: background 0.2s;
+        flex-shrink: 0;
+      }
+      .science-toggle.on {
+        background: var(--science);
+      }
+      .science-toggle::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #fff;
+        transition: left 0.2s;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      }
+      .science-toggle.on::after {
+        left: 22px;
+      }
+      .science-knob-group {
+        margin: 10px 0;
+      }
+      .science-knob-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+      .science-knob-label span {
+        color: var(--science);
+      }
+      .science-knob {
+        width: 100%;
+        accent-color: var(--science);
+      }
+      .science-piano-wrap {
+        background: #1a1a2e;
+        border-radius: 12px;
+        padding: 8px;
+        margin: 10px 0;
+        overflow-x: auto;
+      }
+      .science-piano-row {
+        display: flex;
+        gap: 2px;
+        margin: 1px 0;
+        height: 18px;
+        align-items: center;
+      }
+      .science-piano-cell {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.08);
+        transition: background 0.15s;
+      }
+      .science-piano-cell.hit {
+        background: var(--science);
+        box-shadow: 0 0 4px var(--science);
+      }
+      .science-piano-cell.hit-a {
+        background: #ff8c42;
+      }
+      .science-piano-cell.hit-b {
+        background: #e8587a;
+      }
+      .science-piano-cell.hit-c {
+        background: #7bc67e;
+      }
+      .science-visualizer {
+        display: flex;
+        gap: 4px;
+        align-items: flex-end;
+        height: 60px;
+        background: #1a1a2e;
+        border-radius: 12px;
+        padding: 8px;
+        margin-top: 10px;
+      }
+      .science-vbar {
+        flex: 1;
+        background: linear-gradient(to top, var(--science), var(--science2));
+        border-radius: 3px;
+        transition: height 0.1s;
+      }
+      .science-particles {
+        position: relative;
+        height: 80px;
+        background: #1a1a2e;
+        border-radius: 12px;
+        margin-top: 10px;
+        overflow: hidden;
+      }
+      .science-particle {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--science2);
+        pointer-events: none;
+      }
+      .science-open-composer {
+        background: linear-gradient(135deg, var(--science), var(--science2));
+        color: #fff;
+        border: none;
+        border-radius: 14px;
+        padding: 14px;
+        font-size: 16px;
+        font-weight: 800;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 10px;
+        transition: transform 0.1s;
+      }
+      .science-open-composer:active {
+        transform: scale(0.98);
+      }
+      .science-composition-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .science-composition-item {
+        background: rgba(155, 89, 182, 0.08);
+        border-radius: 12px;
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .science-composition-item .name {
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .science-composition-item .meta {
+        font-size: 11px;
+        color: var(--dim);
+        margin-top: 2px;
+      }
+      .science-composition-item .actions {
+        display: flex;
+        gap: 6px;
+      }
+      .science-composition-item button {
+        border: none;
+        border-radius: 8px;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .science-empty {
+        font-size: 13px;
+        color: var(--dim);
+        text-align: center;
+        padding: 16px;
+      }
+      .science-step-tabs {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        padding: 8px 16px;
+        background: rgba(155, 89, 182, 0.08);
+        border-bottom: 1px solid rgba(155, 89, 182, 0.15);
+        flex-shrink: 0;
+      }
+      .science-step-tab {
+        font-size: 13px;
+        font-weight: 700;
+        padding: 6px 12px;
+        border-radius: 20px;
+        background: #fff;
+        border: 2px solid transparent;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.15s;
+      }
+      .science-step-tab.active {
+        background: var(--science);
+        color: #fff;
+      }
+      .science-step-tab:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .science-why-panel {
+        background: rgba(155, 89, 182, 0.08);
+        border-radius: 12px;
+        padding: 12px;
+        margin-top: 10px;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      .science-why-panel b {
+        color: var(--science);
+      }
+      .science-data-info {
+        background: rgba(155, 89, 182, 0.08);
+        border-radius: 10px;
+        padding: 10px;
+        margin-top: 8px;
+        font-size: 12px;
+        color: var(--dim);
+        line-height: 1.5;
+      }
+      .science-data-info b {
+        color: var(--text);
+      }
+
+      .mini-composer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 480px;
+        height: 900px;
+        background: var(--bg);
+        z-index: 100;
+        display: none;
+        flex-direction: column;
+      }
+      .mini-composer.show {
+        display: flex;
+      }
+      .mc-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+        background: var(--card);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      }
+      .mc-title {
+        font-size: 18px;
+        font-weight: 800;
+      }
+      .mc-tracks {
+        flex: 1;
+        overflow-y: auto;
+        padding: 12px 16px;
+      }
+      .mc-track {
+        margin: 6px 0;
+        background: var(--card);
+        border-radius: 10px;
+        padding: 8px;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+      }
+      .mc-track-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+      }
+      .mc-track-name {
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .mc-cells {
+        display: flex;
+        gap: 2px;
+        flex-wrap: wrap;
+      }
+      .mc-cell {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        background: rgba(0, 0, 0, 0.06);
+        cursor: pointer;
+        transition: background 0.1s;
+      }
+      .mc-cell.on {
+        background: var(--trackA);
+      }
+      .mc-footer {
+        padding: 10px 16px;
+        background: var(--card);
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .mc-btn {
+        border: none;
+        border-radius: 10px;
+        padding: 8px 14px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .mc-source-label {
+        font-size: 11px;
+        color: var(--dim);
+        font-weight: 600;
+      }
+      #whyOverlay,
+      #tutorialOverlay,
+      #eduCardOverlay,
+      #diaryOverlay,
+      #kgOverlay,
+      #teacherOverlay,
+      #worldIntroOverlay,
+      #conceptMapOverlay,
+      #bossProblemOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 480px;
+        height: 900px;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 150;
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+      #whyOverlay.show,
+      #tutorialOverlay.show,
+      #eduCardOverlay.show,
+      #diaryOverlay.show,
+      #kgOverlay.show,
+      #teacherOverlay.show,
+      #worldIntroOverlay.show,
+      #conceptMapOverlay.show,
+      #bossProblemOverlay.show {
+        display: flex;
+      }
+      .overlay-card {
+        background: var(--card);
+        border-radius: 20px;
+        padding: 20px;
+        width: 440px;
+        max-height: 720px;
+        overflow-y: auto;
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+      }
+      .overlay-title {
+        font-size: 20px;
+        font-weight: 800;
+        margin-bottom: 10px;
+      }
+      .overlay-text {
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 10px;
+      }
+      .overlay-close {
+        background: var(--trackA);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 10px 20px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 8px;
+      }
+      .edu-concept {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--w3);
+        margin: 6px 0;
+      }
+      .edu-practice {
+        font-size: 13px;
+        color: var(--dim);
+        margin: 4px 0;
+      }
+      .diary-entry {
+        background: rgba(0, 0, 0, 0.03);
+        border-radius: 10px;
+        padding: 8px;
+        margin: 4px 0;
+        font-size: 13px;
+      }
+      .diary-date {
+        font-size: 11px;
+        color: var(--dim);
+        font-weight: 600;
+      }
+      #kgCanvas {
+        width: 100%;
+        border-radius: 12px;
+        background: #1a1a2e;
+      }
+      .teacher-login {
+        display: flex;
+        gap: 8px;
+        margin: 10px 0;
+      }
+      .teacher-login input {
+        flex: 1;
+        border: 2px solid #e8e4de;
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 15px;
+        outline: none;
+      }
+      .teacher-login button {
+        background: var(--trackA);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 8px 16px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .teacher-content {
+        display: none;
+      }
+      .teacher-content.show {
+        display: block;
+      }
+      .teacher-stat {
+        display: inline-block;
+        background: rgba(0, 0, 0, 0.04);
+        border-radius: 10px;
+        padding: 6px 12px;
+        margin: 3px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .heatmap-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 2px;
+        margin: 8px 0;
+      }
+      .heatmap-cell {
+        aspect-ratio: 1;
+        border-radius: 3px;
+        background: rgba(0, 0, 0, 0.04);
+      }
+      .bar-chart {
+        display: flex;
+        align-items: flex-end;
+        gap: 4px;
+        height: 80px;
+        margin: 8px 0;
+      }
+      .bar {
+        background: var(--trackA);
+        border-radius: 4px 4px 0 0;
+        min-width: 20px;
+        transition: height 0.3s;
+      }
+      .export-btn {
+        background: var(--w6);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 8px 16px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 8px;
+      }
+      #hintFloat {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--card);
+        border-radius: 14px;
+        padding: 8px 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+        font-size: 13px;
+        font-weight: 700;
+        z-index: 50;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+      }
+      #hintFloat.show {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      #achievementPopup {
+        position: fixed;
+        top: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--card);
+        border-radius: 16px;
+        padding: 12px 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        z-index: 200;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        opacity: 0;
+        transition:
+          opacity 0.3s,
+          transform 0.3s;
+        pointer-events: none;
+      }
+      #achievementPopup.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+      .ach-icon {
+        font-size: 28px;
+      }
+      .ach-info {
+        text-align: left;
+      }
+      .ach-name {
+        font-size: 14px;
+        font-weight: 800;
+      }
+      .ach-desc {
+        font-size: 12px;
+        color: var(--dim);
+      }
+      .confetti-piece {
+        position: fixed;
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+        z-index: 300;
+        pointer-events: none;
+        animation: confettiFall 2s ease-out forwards;
+      }
+      @keyframes confettiFall {
+        0% {
+          opacity: 1;
+          transform: translateY(0) rotate(0deg);
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(600px) rotate(720deg);
+        }
+      }
+      .bg-music-btn {
+        position: fixed;
+        bottom: 18px;
+        right: 18px;
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: var(--card);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+        border: none;
+        font-size: 26px;
+        cursor: pointer;
+        z-index: 40;
+        transition:
+          transform 0.15s,
+          background 0.2s;
+      }
+      .bg-music-btn:active {
+        transform: scale(0.92);
+      }
+      .bg-music-btn::after {
+        content: '背景音乐';
+        position: absolute;
+        bottom: 120%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(45, 45, 58, 0.85);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 5px 10px;
+        border-radius: 8px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+      }
+      .bg-music-btn:hover::after,
+      .bg-music-btn:active::after {
+        opacity: 1;
+      }
+      .bg-music-btn.on {
+        background: var(--w3);
+        color: #fff;
+      }
+      .bg-music-btn.off {
+        background: #e8e4de;
+        color: var(--dim);
+      }
+      #bgmHint {
+        position: fixed;
+        bottom: 78px;
+        right: 18px;
+        background: var(--w3);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 8px 14px;
+        border-radius: 14px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+        z-index: 41;
+        opacity: 0;
+        transform: translateY(10px);
+        transition:
+          opacity 0.3s,
+          transform 0.3s;
+        pointer-events: none;
+        max-width: 220px;
+        text-align: center;
+      }
+      #bgmHint.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      #bgmHint::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        right: 18px;
+        border: 6px solid transparent;
+        border-top-color: var(--w3);
+      }
+      .mc-goal {
+        background: linear-gradient(135deg, var(--w5), #ffe5a0);
+        border-radius: 12px;
+        margin: 8px 16px;
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 700;
+        color: #2d2d3a;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      }
+      .mc-goal-target {
+        margin-top: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #5c5c6e;
+      }
+      .share-btn {
+        background: var(--w3);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 6px 12px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .ach-cat-title {
+        font-size: 16px;
+        font-weight: 800;
+        margin: 16px 0 10px;
+        color: var(--text);
+      }
+      .ach-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+      .ach-card {
+        background: var(--card);
+        border-radius: 14px;
+        padding: 12px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        transition:
+          transform 0.15s,
+          opacity 0.15s;
+        content-visibility: auto;
+        contain-intrinsic-size: 0 120px;
+      }
+      .ach-card.locked {
+        opacity: 0.45;
+        background: #f5f0ea;
+      }
+      .ach-card-icon {
+        font-size: 32px;
+        margin-bottom: 6px;
+      }
+      .ach-card-name {
+        font-size: 13px;
+        font-weight: 800;
+        margin-bottom: 2px;
+      }
+      .ach-card-desc {
+        font-size: 11px;
+        color: var(--dim);
+        line-height: 1.3;
+      }
+      .ach-card-q {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--dim);
+        margin-bottom: 4px;
+      }
+      #achievementsScreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 480px;
+        height: 900px;
+        background: var(--bg);
+        z-index: 80;
+        display: none;
+        flex-direction: column;
+      }
+      #achievementsScreen.active {
+        display: flex;
+        opacity: 1;
+        transform: none;
+      }
+      .ach-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+        background: var(--card);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        flex-shrink: 0;
+      }
+      .ach-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 12px 16px 80px;
+      }
+      #toastContainer {
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 5000;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        pointer-events: none;
+      }
+      .toast {
+        min-width: 180px;
+        max-width: 400px;
+        padding: 10px 16px;
+        border-radius: 12px;
+        font-size: 14px;
+        color: #fff;
+        background: rgba(45, 45, 58, 0.92);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+        opacity: 0;
+        transform: translateY(12px);
+        transition:
+          opacity 0.25s ease,
+          transform 0.25s ease;
+        text-align: center;
+      }
+      .toast-visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .toast-success {
+        background: rgba(74, 162, 93, 0.95);
+      }
+      .toast-error {
+        background: rgba(214, 80, 80, 0.95);
+      }
+      .confirm-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 6000;
+        background: rgba(0, 0, 0, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 1;
+        transition: opacity 0.2s ease;
+      }
+      .confirm-fade-out {
+        opacity: 0;
+      }
+      .confirm-box {
+        width: 320px;
+        padding: 22px;
+        background: var(--card);
+        border-radius: var(--radius);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
+        text-align: center;
+      }
+      .confirm-message {
+        font-size: 15px;
+        line-height: 1.5;
+        margin-bottom: 18px;
+        color: var(--text);
+      }
+      .confirm-actions {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+      }
+      .confirm-btn {
+        padding: 8px 20px;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        cursor: pointer;
+        transition:
+          transform 0.1s ease,
+          opacity 0.15s ease;
+      }
+      .confirm-btn:active {
+        transform: scale(0.96);
+      }
+      .confirm-btn-primary {
+        background: var(--trackA);
+        color: #fff;
+      }
+      .confirm-btn-secondary {
+        background: #f0f0f4;
+        color: var(--text);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loadingScreen">
+      <div class="loading-title">数律</div>
+      <div class="loading-sub">MATHBEAT</div>
+      <div class="loading-bar-wrap"><div class="loading-bar" id="loadingBar"></div></div>
+      <div class="loading-text" id="loadingText">加载中...</div>
+    </div>
+    <script>
+      if (location.protocol === 'file:') {
+        const txt = document.getElementById('loadingText');
+        if (txt)
+          txt.innerHTML =
+            '正在本地运行... <span style="font-size:12px">部分功能（PWA离线、MIDI导出）可能需要服务器环境</span>';
+      }
+    </script>
+    <canvas id="particleCanvas"></canvas>
+    <div id="hitFlashOverlay" style="position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity 90ms ease-out;z-index:9999"></div>
+
+    <div id="homeScreen" class="screen active">
+      <div class="home-header">
+        <div class="home-title" data-i18n="app.title">数律 MathBeat</div>
+        <div class="home-sub" data-i18n="app.subtitle">数学 × 音乐</div>
+        <canvas id="homeVisualizer" width="320" height="64" style="width:100%;max-width:320px;height:64px;margin-top:8px;border-radius:12px;background:rgba(0,0,0,0.2)"></canvas>
+      </div>
+      <div class="home-stats">
+        <div class="stat-pill">⭐ <span id="totalStars">0</span></div>
+        <div class="stat-pill">🔥 <span id="bestComboDisplay">0</span></div>
+        <div class="stat-pill">🏆 <span id="achCount">0</span></div>
+      </div>
+      <div
+        class="daily-challenge"
+        onclick="openTeacher()"
+        style="display: none; background: linear-gradient(135deg, #7c6bff, #a78bfa); color: #fff; margin-bottom: 10px"
+      >
+        <div class="daily-left">
+          <div class="daily-icon">👩‍🏫</div>
+          <div>
+            <div class="daily-title">教师面板</div>
+            <div class="daily-sub">查看班级进度、导出学习数据</div>
+          </div>
+        </div>
+        <div class="daily-status">进入</div>
+      </div>
+      <div id="dailyChallengeBanner" class="daily-challenge" onclick="startDailyChallenge()">
+        <div class="daily-left">
+          <div class="daily-icon">📅</div>
+          <div>
+            <div class="daily-title" data-i18n="home.daily">每日挑战</div>
+            <div class="daily-sub" id="dailySub">今日题目已生成</div>
+          </div>
+        </div>
+        <div class="daily-status" id="dailyStatus">开始挑战</div>
+      </div>
+      <div id="continueBar" style="display: none"></div>
+      <div id="worldGrid">
+        <div id="worldGridSkeleton" style="display: flex; flex-wrap: wrap; gap: 10px; padding: 4px 0">
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+        </div>
+      </div>
+      <div class="home-actions">
+        <div class="action-card action-concept" onclick="openConceptMap()">
+          <div class="action-top"><span class="action-icon">🕸️</span><span>概念互联</span></div>
+          <div class="action-name">数学概念图谱</div>
+          <div class="action-sub">可视化 8 个数学概念之间的联系</div>
+        </div>
+        <div class="action-card action-science" onclick="openScienceMode()">
+          <div class="action-top">
+            <span class="action-icon">🔬</span><span data-i18n="home.science_mode">独立模式</span>
+          </div>
+          <div class="action-name" data-i18n="home.science">科学之声</div>
+          <div class="action-sub">把DFT/MD/FEM/CFD数据变成音乐</div>
+        </div>
+        <div class="action-card action-free" id="freeModeCard" onclick="openFreeMode()">
+          <div class="action-top">
+            <span class="action-icon">🎮</span><span data-i18n="home.freemode_label">自由创作</span>
+          </div>
+          <div class="action-name" data-i18n="home.freemode">自由模式</div>
+          <div class="action-sub">轻量即兴创作间</div>
+          <div class="action-lock" id="freeModeLock" data-i18n="home.unlock_world6">🔒 通关世界6解锁</div>
+        </div>
+        <div
+          class="action-card"
+          onclick="openAchievements()"
+          style="background: linear-gradient(135deg, #ffd166, #ffe5a0); color: #fff"
+        >
+          <div class="action-top"><span class="action-icon">🏆</span><span data-i18n="home.ach_label">成就</span></div>
+          <div class="action-name" data-i18n="home.ach_page">成就图鉴</div>
+          <div class="action-sub">解锁全部数学音乐成就</div>
+        </div>
+        <div
+          class="action-card"
+          onclick="openSettings()"
+          style="background: linear-gradient(135deg, #8e8ea0, #b5b5c8); color: #fff"
+        >
+          <div class="action-top"><span class="action-icon">⚙️</span><span>设置</span></div>
+          <div class="action-name">游戏设置</div>
+          <div class="action-sub">音乐、音效、难度与数据管理</div>
+        </div>
+        <div
+          class="action-card"
+          onclick="openEndlessMode()"
+          style="background: linear-gradient(135deg, #ff6b6b, #ffa07a); color: #fff"
+        >
+          <div class="action-top"><span class="action-icon">♾️</span><span>无尽模式</span></div>
+          <div class="action-name">数学音乐挑战</div>
+          <div class="action-sub">无限轮次，连击加分，创作你的旋律</div>
+        </div>
+        <div
+          class="action-card"
+          onclick="openLevelEditor()"
+          style="background: linear-gradient(135deg, #5dade2, #85c1e9); color: #fff"
+        >
+          <div class="action-top"><span class="action-icon">🎨</span><span>关卡编辑器</span></div>
+          <div class="action-name">设计自定义关卡</div>
+          <div class="action-sub">创建、保存、分享你的数学音乐挑战</div>
+        </div>
+      </div>
+      <div class="home-bottom">
+        <div class="home-bottom-label">已解锁音色</div>
+        <div class="unlock-tags" id="composerUnlocks"></div>
+      </div>
+      <div class="home-bottom" style="margin-top: 8px">
+        <div class="home-bottom-label">创作入口</div>
+        <div
+          id="composerHomeCard"
+          class="action-card action-composer"
+          onclick="openComposerHome()"
+          style="margin-top: 6px"
+        >
+          <div class="action-top">
+            <span class="action-icon">🎹</span><span data-i18n="home.composer_label">作曲台</span>
+          </div>
+          <div class="action-name" data-i18n="home.composer">完整作曲台</div>
+          <div class="action-sub">用数学生成器创作完整曲目</div>
+          <div class="action-lock" id="composerHomeLock" data-i18n="home.unlock_world6">🔒 通关世界6解锁</div>
+        </div>
+      </div>
+      <div class="home-bottom" style="margin-top: 8px">
+        <div class="home-bottom-label" data-i18n="home.samples">数学摇滚示例曲库</div>
+        <div
+          class="action-card"
+          onclick="openSampleLibrary()"
+          style="background: linear-gradient(135deg, #9b5de5, #c77dff); color: #fff; margin-top: 6px"
+        >
+          <div class="action-top">
+            <span class="action-icon">🎸</span><span data-i18n="home.samples_label">示例曲库</span>
+          </div>
+          <div class="action-name" data-i18n="home.samples">数学摇滚示例曲库</div>
+          <div class="action-sub" data-i18n="home.samples_desc">
+            9 首内置数学摇滚（含 3 首真实科学数据作品），可试听并导入作曲台
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="levelScreen" class="screen">
+      <div class="level-screen-header">
+        <span class="back-btn" onclick="showScreen('home')">←</span>
+        <div>
+          <div class="level-screen-title" id="levelScreenTitle"></div>
+          <div class="level-screen-sub" id="levelScreenSub"></div>
+        </div>
+      </div>
+      <div id="levelCards"></div>
+      <div style="padding: 8px 16px">
+        <div class="home-bottom-label">通关解锁</div>
+        <div id="unlockPreviewItems" style="font-size: 13px; font-weight: 600; color: var(--dim)"></div>
+      </div>
+    </div>
+
+    <div id="gameScreen" class="screen">
+      <div class="game-header">
+        <div class="game-header-left">
+          <span class="game-back" onclick="exitGame()">←</span><span class="game-level-pill" id="gameLevelPill"></span>
+        </div>
+        <div class="game-header-right">
+          <span class="combo-badge" id="comboBadge"></span
+          ><button class="why-btn" onclick="restartLevel()">⟲ 重开</button
+          ><button class="why-btn" id="gamePauseBtn" onclick="toggleGamePause()">⏸ 暂停</button
+          ><button class="why-btn" onclick="useHint()">💡 提示</button
+          ><button class="why-btn" onclick="showWhy()">为什么？</button>
+        </div>
+      </div>
+      <div id="gameContent"></div>
+    </div>
+
+    <div id="scienceScreen" class="screen">
+      <div class="science-header">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <span class="back-btn" onclick="closeScienceMode()">←</span><span class="science-title">🔬 科学之声</span>
+        </div>
+        <button class="share-btn" onclick="shareScience()">分享</button>
+      </div>
+      <div class="science-step-tabs" id="scienceStepTabs">
+        <div class="science-step-tab active" data-step="mode" onclick="goScienceStep('mode')">选择类型</div>
+        <div class="science-step-tab" data-step="data" onclick="goScienceStep('data')">数据导入</div>
+        <div class="science-step-tab" data-step="compose" onclick="goScienceStep('compose')">映射作曲</div>
+      </div>
+      <div class="science-body">
+        <div id="scienceStep-mode" class="science-section active">
+          <div class="science-card">
+            <div class="science-card-title">选择科学模拟类型</div>
+            <div class="science-intro">科学之声把计算科学数据映射为音乐。选择一种数据类型开始探索。</div>
+            <div class="science-mode-grid">
+              <div class="science-mode-card" onclick="selectScienceType('dft')">
+                <div class="science-mode-emoji">⚛️</div>
+                <div class="science-mode-name">DFT 密度泛函</div>
+                <div class="science-mode-sub">从电子结构到音乐</div>
+              </div>
+              <div class="science-mode-card" onclick="selectScienceType('md')">
+                <div class="science-mode-emoji">🔬</div>
+                <div class="science-mode-name">MD 分子动力学</div>
+                <div class="science-mode-sub">从原子运动到节奏</div>
+              </div>
+              <div class="science-mode-card" onclick="selectScienceType('fem')">
+                <div class="science-mode-emoji">🏗️</div>
+                <div class="science-mode-name">FEM 有限元</div>
+                <div class="science-mode-sub">从应力场到和声</div>
+              </div>
+              <div class="science-mode-card" onclick="selectScienceType('cfd')">
+                <div class="science-mode-emoji">🌊</div>
+                <div class="science-mode-name">CFD 计算流体力学</div>
+                <div class="science-mode-sub">从流场到织体</div>
+              </div>
+              <div class="science-mode-card" onclick="selectScienceType('xrd')">
+                <div class="science-mode-emoji">💎</div>
+                <div class="science-mode-name">XRD 晶体衍射</div>
+                <div class="science-mode-sub">从衍射峰到旋律</div>
+              </div>
+              <div class="science-mode-card" onclick="selectScienceType('dna')">
+                <div class="science-mode-emoji">🧬</div>
+                <div class="science-mode-name">DNA 序列</div>
+                <div class="science-mode-sub">从碱基到音符</div>
+              </div>
+              <div class="science-mode-card" onclick="selectScienceType('pulsar')">
+                <div class="science-mode-emoji">🌟</div>
+                <div class="science-mode-name">脉冲星/天文</div>
+                <div class="science-mode-sub">从周期到BPM</div>
+              </div>
+              <div class="science-mode-card" onclick="openScaleLab()">
+                <div class="science-mode-emoji">🎵</div>
+                <div class="science-mode-name">音阶实验室</div>
+                <div class="science-mode-sub">2^12音阶·Hall-Petch</div>
+              </div>
+              <div class="science-mode-card" onclick="openProteinMode()">
+                <div class="science-mode-emoji">🧬</div>
+                <div class="science-mode-name">蛋白质声化</div>
+                <div class="science-mode-sub">序列↔音乐双向映射</div>
+              </div>
+              <div class="science-mode-card" onclick="openWebMode()">
+                <div class="science-mode-emoji">🕸️</div>
+                <div class="science-mode-name">蜘蛛网声化</div>
+                <div class="science-mode-sub">图结构→乐器</div>
+              </div>
+            </div>
+          </div>
+          <div class="science-card">
+            <div class="science-card-title">我的科学音乐</div>
+            <div id="scienceCompositionList"><div class="science-empty">还没有保存的科学音乐作品</div></div>
+          </div>
+        </div>
+        <div id="scienceStep-data" class="science-section">
+          <div class="science-card">
+            <div class="science-card-title">数据导入 · <span id="scienceTypeName">DFT</span></div>
+            <div class="science-type-row">
+              <div class="science-type-btn active" data-type="dft" onclick="selectScienceType('dft')">DFT</div>
+              <div class="science-type-btn" data-type="md" onclick="selectScienceType('md')">MD</div>
+              <div class="science-type-btn" data-type="fem" onclick="selectScienceType('fem')">FEM</div>
+              <div class="science-type-btn" data-type="cfd" onclick="selectScienceType('cfd')">CFD</div>
+              <div class="science-type-btn" data-type="xrd" onclick="selectScienceType('xrd')">XRD</div>
+              <div class="science-type-btn" data-type="dna" onclick="selectScienceType('dna')">DNA</div>
+              <div class="science-type-btn" data-type="pulsar" onclick="selectScienceType('pulsar')">Pulsar</div>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px">
+              <button class="science-btn secondary" onclick="loadScienceSample()">使用示例数据</button>
+              <div class="science-file-wrap science-btn secondary">
+                <span>上传你的数据文件</span
+                ><input
+                  type="file"
+                  accept=".json,.csv,.txt,.out,.outcar,.lammpstrj,.log,.mph"
+                  onchange="handleScienceFile(this)"
+                />
+              </div>
+            </div>
+            <div class="science-helper" id="scienceSchemaHelp"></div>
+            <div class="science-upload-status" id="scienceUploadStatus"></div>
+            <div class="science-data-info" id="scienceDataInfo"></div>
+          </div>
+          <div class="science-card">
+            <div class="science-card-title">数据预览 · <span id="scienceDataName">示例数据</span></div>
+            <div class="science-preview-canvas"><canvas id="scienceDataCanvas" width="448" height="170"></canvas></div>
+            <div class="science-stats" id="scienceStats"></div>
+          </div>
+          <div class="science-card">
+            <button class="science-open-composer" onclick="goScienceStep('compose')">下一步：映射与作曲 →</button>
+          </div>
+        </div>
+        <div id="scienceStep-compose" class="science-section">
+          <div class="science-card">
+            <div class="science-card-title">数据可视化</div>
+            <div class="science-preview-canvas">
+              <canvas id="scienceComposeCanvas" width="448" height="170"></canvas>
+            </div>
+          </div>
+          <div class="science-card">
+            <div class="science-card-title">Math-Music 深度映射</div>
+            <div id="scienceMappingList"></div>
+            <button class="science-btn secondary" style="margin-top: 8px" onclick="toggleScienceWhyPanel()">
+              为什么？
+            </button>
+            <div class="science-why-panel" id="scienceWhyPanel" style="display: none"></div>
+          </div>
+          <div class="science-card">
+            <div class="science-card-title">映射参数</div>
+            <div id="scienceKnobs"></div>
+            <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap">
+              <button class="science-btn" id="sciGenerateBtn" onclick="regenerateScienceMusic()">生成音乐</button>
+              <button class="science-btn" id="sciPlayBtn" onclick="toggleSciencePlay()">▶ 播放</button>
+              <button class="science-btn secondary" onclick="saveScienceComposition()">保存作品</button>
+              <button class="science-open-composer" onclick="openComposerWithScience()">导出到作曲台</button>
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap">
+              <button class="science-btn secondary" onclick="downloadScienceExport('midi')">导出 MIDI</button>
+              <button class="science-btn secondary" onclick="downloadScienceExport('json')">导出 JSON</button>
+              <button class="science-btn secondary" onclick="downloadScienceExport('csv')">导出 CSV</button>
+            </div>
+          </div>
+          <div class="science-card">
+            <div class="science-card-title">Piano Roll</div>
+            <div class="science-piano-wrap" id="sciencePianoRoll"></div>
+            <div class="science-visualizer" id="scienceVisualizer"></div>
+            <div class="science-particles" id="scienceParticles"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mini-composer" id="miniComposer">
+      <div class="mc-header">
+        <span class="mc-title" id="mcTitle">👑 终极作曲</span
+        ><button class="ctrl-btn" onclick="exitMiniComposer()">✕</button>
+      </div>
+      <div class="mc-goal" id="mcGoal">
+        <div id="mcGoalText"></div>
+        <div class="mc-goal-target" id="mcGoalTarget">目标：至少8个音符</div>
+      </div>
+      <div class="mc-tracks" id="mcTracks"></div>
+      <div class="mc-footer">
+        <button class="mc-btn" style="background: var(--trackA); color: #fff" onclick="mcTogglePlay()">▶</button
+        ><button class="mc-btn" style="background: rgba(0, 0, 0, 0.06)" onclick="mcReset()">⟲</button
+        ><button class="mc-btn" style="background: var(--w6); color: #fff" onclick="mcApplyGen()">📏 生成</button
+        ><button class="mc-btn" style="background: var(--success); color: #fff" onclick="mcFinish()">提交验证</button>
+      </div>
+    </div>
+
+    <div id="freeModeScreen" class="screen">
+      <div class="free-header">
+        <span>🎮 自由模式</span><button class="ctrl-btn" onclick="closeFreeMode()">✕</button>
+      </div>
+      <div class="free-body">
+        <div class="challenge-card">
+          <div class="challenge-q">轻量即兴创作间：4 轨 × 16 步，随意编排，无通关条件。</div>
+          <div id="freeTracks"></div>
+          <div class="controls-bar" style="margin-top: 12px">
+            <button class="ctrl-btn" onclick="fmReset()">⟲</button
+            ><button class="ctrl-btn play-btn" id="fmPlayBtn" onclick="fmTogglePlay()">▶</button>
+            <div class="bpm-group"><span class="bpm-val" id="fmBpm">120</span><span>BPM</span></div>
+            <button class="ctrl-btn speed-btn" onclick="fmChangeBpm(-10)">-</button
+            ><button class="ctrl-btn speed-btn" onclick="fmChangeBpm(10)">+</button>
+          </div>
+          <div style="margin-top: 12px; font-size: 13px; font-weight: 600; color: var(--dim)">
+            需要导出 / 多轨 / 数学生成器？
+          </div>
+          <button
+            class="verify-btn"
+            style="margin-top: 8px; background: var(--w3); width: 100%"
+            onclick="openComposerHome()"
+          >
+            打开完整作曲台 →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="whyOverlay">
+      <div class="overlay-card">
+        <div class="overlay-title" id="whyTitle">为什么？</div>
+        <div class="overlay-text" id="whyText"></div>
+        <button class="overlay-close" onclick="closeWhy()">明白了</button>
+      </div>
+    </div>
+    <div id="tutorialOverlay" onclick="if (event.target === this) closeTutorial();">
+      <div class="overlay-card">
+        <div class="overlay-title" id="tutTitle">教程</div>
+        <div class="overlay-text" id="tutText"></div>
+        <div id="tutStep" style="font-size: 12px; color: var(--dim); margin-top: 6px"></div>
+        <button class="overlay-close" id="tutNext" onclick="closeTutorial()">知道了</button>
+      </div>
+    </div>
+    <div id="eduCardOverlay" onclick="if (event.target === this) closeEduCard();">
+      <div class="overlay-card">
+        <div class="overlay-title" id="eduTitle">知识卡片</div>
+        <div class="edu-concept" id="eduConcept"></div>
+        <div class="overlay-text" id="eduText"></div>
+        <div class="edu-practice" id="eduPractice"></div>
+        <button class="overlay-close" onclick="closeEduCard()">继续</button>
+      </div>
+    </div>
+    <div id="diaryOverlay">
+      <div class="overlay-card">
+        <div class="overlay-title">数学日记</div>
+        <div id="diaryEntries"></div>
+        <button class="overlay-close" onclick="closeDiary()">关闭</button>
+      </div>
+    </div>
+    <div id="kgOverlay">
+      <div class="overlay-card">
+        <div class="overlay-title">知识图谱</div>
+        <canvas id="kgCanvas" width="380" height="380"></canvas
+        ><button class="overlay-close" onclick="closeKG()">关闭</button>
+      </div>
+    </div>
+    <div id="teacherOverlay">
+      <div class="overlay-card">
+        <div class="overlay-title">教师面板</div>
+        <div class="teacher-login" id="teacherLogin">
+          <input type="password" id="teacherPwd" placeholder="输入教师密码" /><button onclick="teacherLogin()">
+            登录
+          </button>
+        </div>
+        <div class="teacher-content" id="teacherContent">
+          <div id="teacherStats"></div>
+          <div class="heatmap-grid" id="heatmapGrid"></div>
+          <div class="bar-chart" id="barChart"></div>
+          <button class="export-btn" onclick="exportData()">导出数据</button>
+        </div>
+        <button class="overlay-close" onclick="closeTeacher()">关闭</button>
+      </div>
+    </div>
+    <div id="worldIntroOverlay">
+      <div class="overlay-card">
+        <div class="overlay-title" id="worldIntroTitle">世界介绍</div>
+        <div id="worldIntroVisual" style="margin: 10px 0"></div>
+        <div class="overlay-text" id="worldIntroText"></div>
+        <button class="overlay-close" onclick="closeWorldIntro()">进入世界</button>
+      </div>
+    </div>
+    <div id="conceptMapOverlay" onclick="if (event.target === this) closeConceptMap();">
+      <div class="overlay-card">
+        <div class="overlay-title">🕸️ 概念互联图谱</div>
+        <div class="overlay-text">
+          点击节点查看概念说明，或跳转到对应世界。数学不是孤立的知识点，而是一张互相连接的网络。
+        </div>
+        <div id="conceptMapContainer" class="concept-map-wrap"></div>
+        <div id="conceptMapDetail" class="concept-detail" style="display: none"></div>
+        <button class="overlay-close" onclick="closeConceptMap()" style="margin-top: 12px">关闭</button>
+      </div>
+    </div>
+    <div id="bossProblemOverlay">
+      <div class="overlay-card">
+        <div class="overlay-title" id="bossProblemTitle">Boss 挑战</div>
+        <div class="boss-problem-emoji" id="bossProblemEmoji">🐉</div>
+        <div class="overlay-text" id="bossProblemText"></div>
+        <div class="boss-problem-statement" id="bossProblemMath"></div>
+        <div class="boss-problem-hint" id="bossProblemHint"></div>
+        <div class="boss-reward" id="bossProblemReward"></div>
+        <button class="overlay-close" onclick="closeBossProblem(true)" style="margin-top: 12px">接受挑战</button
+        ><button
+          class="overlay-close"
+          onclick="closeBossProblem(false)"
+          style="margin-top: 8px; background: var(--dim)"
+        >
+          稍后
+        </button>
+      </div>
+    </div>
+    <div id="hintFloat">💡 试试点击播放按钮听一听节奏</div>
+    <div id="achievementPopup">
+      <span class="ach-icon" id="achPopupIcon"></span>
+      <div class="ach-info">
+        <div class="ach-name" id="achPopupName"></div>
+        <div class="ach-desc" id="achPopupDesc"></div>
+      </div>
+    </div>
+    <button class="bg-music-btn" id="bgMusicBtn" onclick="toggleBgMusic()">🔊</button>
+    <button
+      class="bg-music-btn"
+      id="langBtn"
+      onclick="toggleLang()"
+      style="bottom: 80px; font-size: 14px; font-weight: 700"
+    >
+      EN
+    </button>
+    <div id="bgmHint">🎵 点击开启背景音乐</div>
+
+    <script type="module" src="/src/main.ts"></script>
+    <div
+      id="globalErrorToast"
+      style="
+        display: none;
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(45, 45, 58, 0.9);
+        color: #fff;
+        padding: 10px 18px;
+        border-radius: 24px;
+        font-size: 13px;
+        font-weight: 600;
+        z-index: 3000;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      "
+    ></div>
+    <div
+      id="globalSuccessToast"
+      style="
+        display: none;
+        position: fixed;
+        top: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #7bc67e;
+        color: #fff;
+        padding: 10px 18px;
+        border-radius: 24px;
+        font-size: 13px;
+        font-weight: 600;
+        z-index: 3001;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+      "
+    ></div>
+
+    <div
+      id="sampleLibraryModal"
+      class="screen"
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 480px;
+        height: 900px;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1450;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        opacity: 1;
+        transform: none;
+      "
+    >
+      <div
+        style="
+          background: var(--card);
+          border-radius: var(--radius);
+          padding: 20px;
+          width: 440px;
+          max-height: 760px;
+          overflow-y: auto;
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+        "
+      >
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px">
+          <div style="font-size: 22px; font-weight: 800">🎸 数学摇滚示例曲库</div>
+          <button class="ctrl-btn" onclick="closeSampleLibrary()">✕</button>
+        </div>
+        <div id="sampleLibraryList" style="display: flex; flex-direction: column; gap: 12px"></div>
+      </div>
+    </div>
+
+    <div
+      id="dailyModal"
+      class="screen"
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 480px;
+        height: 900px;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1500;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        opacity: 1;
+        transform: none;
+      "
+    >
+      <div
+        style="
+          background: var(--card);
+          border-radius: var(--radius);
+          padding: 24px;
+          width: 420px;
+          max-height: 820px;
+          overflow-y: auto;
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+        "
+      >
+        <div style="font-size: 24px; font-weight: 800; margin-bottom: 4px">📅 每日挑战</div>
+        <div style="font-size: 14px; font-weight: 600; color: var(--dim); margin-bottom: 16px" id="dailyDate"></div>
+        <div id="dailyBody"></div>
+        <div style="display: flex; justify-content: space-between; margin-top: 12px">
+          <button
+            class="back-btn"
+            onclick="closeDailyModal()"
+            style="
+              position: static;
+              background: var(--dim);
+              color: #fff;
+              border: none;
+              padding: 10px 18px;
+              border-radius: 12px;
+              font-size: 15px;
+              font-weight: 700;
+            "
+          >
+            关闭
+          </button>
+          <button
+            class="back-btn"
+            onclick="showDailyWhy()"
+            style="
+              position: static;
+              background: var(--science);
+              color: #fff;
+              border: none;
+              padding: 10px 18px;
+              border-radius: 12px;
+              font-size: 15px;
+              font-weight: 700;
+            "
+          >
+            为什么？
+          </button>
+        </div>
+        <div id="dailyFeedback" style="margin-top: 12px; font-size: 14px; font-weight: 700; min-height: 20px"></div>
+      </div>
+    </div>
+
+    <!-- Scale Lab Screen -->
+    <div id="scaleLabScreen" class="screen">
+      <div class="ach-header">
+        <span class="back-btn" data-action="closeScaleLab">←</span>
+        <div style="font-size:18px;font-weight:800">🎵 音阶实验室</div>
+        <span></span>
+      </div>
+      <div style="padding:12px;overflow-y:auto;max-height:calc(100vh - 60px)">
+        <div style="background:var(--bg2);border-radius:8px;padding:12px;margin-bottom:12px">
+          <div style="font-size:14px;font-weight:700;margin-bottom:8px">Hall-Petch 散点图 (4096 种音阶)</div>
+          <canvas id="scaleLabCanvas" width="320" height="220" style="width:100%;border-radius:6px"></canvas>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">橙点=文化音阶 · 灰点=其他音阶 · 蓝圈=当前选中 · 蓝带=Hall-Petch 最优走廊</div>
+        </div>
+        <div id="scaleLabInfo" style="margin-bottom:12px"></div>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button class="verify-btn" id="scaleLabPlayBtn" data-action="toggleScaleLoop" style="flex:1">▶ 循环</button>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:8px;font-size:12px">
+          <span style="color:var(--muted);align-self:center">排序:</span>
+          <button class="science-type-btn" data-action="setScaleFilter" data-args='{"sortBy":"hallPetch"}'>HP得分</button>
+          <button class="science-type-btn" data-action="setScaleFilter" data-args='{"sortBy":"entropy"}'>熵</button>
+          <button class="science-type-btn" data-action="setScaleFilter" data-args='{"sortBy":"defect"}'>缺陷</button>
+          <button class="science-type-btn" data-action="setScaleFilter" data-args='{"sortBy":"notes"}'>音数</button>
+        </div>
+        <div id="scaleLabList" style="max-height:300px;overflow-y:auto"></div>
+      </div>
+    </div>
+
+    <!-- Protein Sonification Screen -->
+    <div id="proteinScreen" class="screen">
+      <div class="ach-header">
+        <span class="back-btn" data-action="closeProteinMode">←</span>
+        <div style="font-size:18px;font-weight:800">🧬 蛋白质声化</div>
+        <span></span>
+      </div>
+      <div style="padding:12px;overflow-y:auto;max-height:calc(100vh - 60px)">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="science-type-btn" data-action="loadProteinSample" data-args='{"key":"insulin"}'>胰岛素</button>
+          <button class="science-type-btn" data-action="loadProteinSample" data-args='{"key":"gfp"}'>GFP荧光蛋白</button>
+          <button class="science-type-btn" data-action="loadProteinSample" data-args='{"key":"lysozyme"}'>T4溶菌酶</button>
+          <button class="science-type-btn" data-action="loadProteinSample" data-args='{"key":"silk"}'>蜘蛛丝蛋白</button>
+        </div>
+        <div id="proteinInfo" style="margin-bottom:12px"></div>
+        <button class="verify-btn" id="proteinPlayBtn" data-action="toggleProteinPlay" style="width:100%;margin-bottom:12px">▶ 播放</button>
+        <div style="background:var(--bg2);border-radius:8px;padding:12px;margin-bottom:12px">
+          <div style="font-size:14px;font-weight:700;margin-bottom:8px">逆向映射测试</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px">输入 MIDI 音高序列，反推最可能的氨基酸序列（Buehler 可逆映射）</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">
+            <button class="science-type-btn" data-action="reverseMapTest" data-args='{"midis":[60,62,64,65,67,69,71]}'>C大调音阶</button>
+            <button class="science-type-btn" data-action="reverseMapTest" data-args='{"midis":[60,63,65,67,70]}'>C小调五声</button>
+            <button class="science-type-btn" data-action="reverseMapTest" data-args='{"midis":[55,57,59,60,62,64,65]}'>A小调</button>
+          </div>
+          <div id="proteinReverseResult"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spider Web Sonification Screen -->
+    <div id="webScreen" class="screen">
+      <div class="ach-header">
+        <span class="back-btn" data-action="closeWebMode">←</span>
+        <div style="font-size:18px;font-weight:800">🕸️ 蜘蛛网声化</div>
+        <span></span>
+      </div>
+      <div style="padding:12px;overflow-y:auto;max-height:calc(100vh - 60px)">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="science-type-btn" data-action="loadWebSample" data-args='{"key":"orb"}'>圆网</button>
+          <button class="science-type-btn" data-action="loadWebSample" data-args='{"key":"tangled"}'>乱网</button>
+          <button class="science-type-btn" data-action="loadWebSample" data-args='{"key":"sheet"}'>片网</button>
+        </div>
+        <div id="webViz" style="text-align:center;margin-bottom:12px"></div>
+        <div id="webInfo" style="margin-bottom:12px"></div>
+        <button class="verify-btn" id="webPlayBtn" data-action="toggleWebPlay" style="width:100%">▶ 播放振动</button>
+      </div>
+    </div>
+
+    <div id="achievementsScreen" class="screen">
+      <div class="ach-header">
+        <span class="back-btn" onclick="closeAchievements()">←</span>
+        <div style="font-size: 20px; font-weight: 800">🏆 成就图鉴</div>
+        <span></span>
+      </div>
+      <div class="ach-body" id="achievementsBody"></div>
+    </div>
+
+    <div id="settingsScreen" class="screen">
+      <div class="ach-header">
+        <span class="back-btn" onclick="closeSettings()">←</span>
+        <div style="font-size: 20px; font-weight: 800">⚙️ 设置</div>
+        <span></span>
+      </div>
+      <div class="ach-body" id="settingsBody">
+        <div class="challenge-card" style="margin-bottom: 12px">
+          <div style="font-size: 16px; font-weight: 800; margin-bottom: 10px">音频</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0">
+            <span style="font-size: 14px; font-weight: 700">背景音乐</span>
+            <button class="ctrl-btn" id="settingBgmBtn" onclick="toggleSettingBgm()">开启</button>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0">
+            <span style="font-size: 14px; font-weight: 700">音效</span>
+            <button class="ctrl-btn" id="settingSfxBtn" onclick="toggleSettingSfx()">开启</button>
+          </div>
+          <div style="margin: 10px 0">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px">
+              <span style="font-size: 14px; font-weight: 700">主音量</span>
+              <span id="masterVolumeVal" style="font-size: 13px; font-weight: 700; color: var(--dim)">80%</span>
+            </div>
+            <input type="range" id="masterVolumeSlider" min="0" max="100" value="80" style="width: 100%" oninput="setMasterVolume(this.value / 100)">
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0">
+            <span style="font-size: 14px; font-weight: 700">音色包</span>
+            <select
+              id="settingSoundPack"
+              onchange="changeSoundPack(this.value)"
+              style="font-size: 14px; font-weight: 700; padding: 4px 8px; border-radius: 8px; border: 2px solid #e8e4de"
+            ></select>
+          </div>
+        </div>
+        <div class="challenge-card" style="margin-bottom: 12px">
+          <div style="font-size: 16px; font-weight: 800; margin-bottom: 10px">游戏</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0">
+            <span style="font-size: 14px; font-weight: 700">难度</span>
+            <select
+              id="settingDifficulty"
+              onchange="changeDifficulty(this.value)"
+              style="font-size: 14px; font-weight: 700; padding: 4px 8px; border-radius: 8px; border: 2px solid #e8e4de"
+            >
+              <option value="easy">简单</option>
+              <option value="auto" selected>自动</option>
+              <option value="hard">困难</option>
+            </select>
+          </div>
+        </div>
+        <div class="challenge-card" style="margin-bottom: 12px">
+          <div style="font-size: 16px; font-weight: 800; margin-bottom: 10px">数据</div>
+          <button class="verify-btn" style="width: 100%; margin-bottom: 8px" onclick="exportGameData()">
+            📤 导出存档
+          </button>
+          <button
+            class="verify-btn"
+            style="width: 100%; margin-bottom: 8px; background: var(--w3)"
+            onclick="importGameData()"
+          >
+            📥 导入存档
+          </button>
+          <button class="ctrl-btn" style="width: 100%; background: var(--error); color: #fff" onclick="resetGameData()">
+            ⚠️ 重置所有进度
+          </button>
+        </div>
+        <div class="challenge-card" style="margin-bottom: 12px; opacity: 0.7">
+          <div style="font-size: 16px; font-weight: 800; margin-bottom: 10px">开发者选项</div>
+          <button class="verify-btn" style="width: 100%; background: linear-gradient(135deg,#667eea,#764ba2); color: #fff" data-action="unlockAll">
+            🔓 解锁全部内容（速通）
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(function () {});
+      }
+    </script>
+
+    <div id="endlessModeScreen" class="screen">
+      <div class="ach-header">
+        <span class="back-btn" onclick="closeEndlessMode()">←</span>
+        <div style="font-size: 20px; font-weight: 800">♾️ 无尽模式</div>
+        <span></span>
+      </div>
+      <div class="ach-body" id="endlessBody"></div>
+    </div>
+
+    <div id="levelEditorScreen" class="screen">
+      <div class="ach-header">
+        <span class="back-btn" onclick="closeLevelEditor()">←</span>
+        <div style="font-size: 20px; font-weight: 800">🎨 关卡编辑器</div>
+        <span></span>
+      </div>
+      <div class="ach-body" id="levelEditorBody"></div>
+    </div>
+  </body>
+</html>

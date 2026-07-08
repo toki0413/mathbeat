@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 900" width="480" height="900">
+  <defs>
+    <linearGradient id="b5" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a150a"/>
+      <stop offset="100%" stop-color="#0d0a05"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="900" fill="url(#b5)"/>
+  <!-- 排列网格暗示 -->
+  <g stroke="#FFD166" stroke-width="0.5" opacity="0.06">
+    <line x1="80" y1="200" x2="80" y2="700"/>
+    <line x1="160" y1="200" x2="160" y2="700"/>
+    <line x1="240" y1="200" x2="240" y2="700"/>
+    <line x1="320" y1="200" x2="320" y2="700"/>
+    <line x1="400" y1="200" x2="400" y2="700"/>
+    <line x1="80" y1="200" x2="400" y2="200"/>
+    <line x1="80" y1="325" x2="400" y2="325"/>
+    <line x1="80" y1="450" x2="400" y2="450"/>
+    <line x1="80" y1="575" x2="400" y2="575"/>
+    <line x1="80" y1="700" x2="400" y2="700"/>
+  </g>
+  <!-- 排列箭头 -->
+  <path d="M 100 240 L 140 240" stroke="#FFD166" stroke-width="1" opacity="0.08" stroke-linecap="round"/>
+  <path d="M 180 365 L 220 365" stroke="#FFD166" stroke-width="1" opacity="0.06" stroke-linecap="round"/>
+  <path d="M 260 490 L 300 490" stroke="#FFD166" stroke-width="1" opacity="0.04" stroke-linecap="round"/>
+</svg>

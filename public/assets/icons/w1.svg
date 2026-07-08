@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- W1: 节拍与分数 - 无限符号 + 节拍线 -->
+  <defs>
+    <linearGradient id="w1g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FF8C42"/>
+      <stop offset="100%" stop-color="#FFB347"/>
+    </linearGradient>
+  </defs>
+  <circle cx="24" cy="24" r="22" fill="none" stroke="url(#w1g)" stroke-width="2" opacity="0.15"/>
+  <path d="M 14 24 C 14 18 18 14 24 20 C 30 14 34 18 34 24 C 34 30 30 34 24 28 C 18 34 14 30 14 24 Z" fill="none" stroke="#FF8C42" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="8" y1="32" x2="40" y2="32" stroke="#FF8C42" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+  <line x1="12" y1="36" x2="20" y2="36" stroke="#FF8C42" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+  <line x1="28" y1="36" x2="36" y2="36" stroke="#FF8C42" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+</svg>

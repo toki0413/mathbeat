@@ -1,0 +1,228 @@
+{
+  "summary": {
+    "totalScenarioMs": 5604.400000035763,
+    "longTaskCount": 3,
+    "longTaskTotalMs": 176,
+    "longTasksOver50ms": 3,
+    "homeFrameCount3s": 683,
+    "estimatedFps3s": 227.7,
+    "jsHeapUsedDeltaBytes": 3058844,
+    "jsHeapUsedAfterMB": 5.3
+  },
+  "navigationTiming": {
+    "name": "http://localhost:8090/index.html",
+    "entryType": "navigation",
+    "startTime": 0,
+    "duration": 68.30000001192093,
+    "initiatorType": "navigation",
+    "deliveryType": "cache-storage",
+    "nextHopProtocol": "",
+    "renderBlockingStatus": "non-blocking",
+    "contentEncoding": "",
+    "workerStart": 1,
+    "workerRouterEvaluationStart": 0,
+    "workerCacheLookupStart": 0,
+    "workerMatchedSourceType": "",
+    "workerFinalSourceType": "",
+    "redirectStart": 0,
+    "redirectEnd": 0,
+    "fetchStart": 1.100000023841858,
+    "domainLookupStart": 1.100000023841858,
+    "domainLookupEnd": 1.100000023841858,
+    "connectStart": 1.100000023841858,
+    "secureConnectionStart": 0,
+    "connectEnd": 1.100000023841858,
+    "requestStart": 1.100000023841858,
+    "responseStart": 12.5,
+    "firstInterimResponseStart": 12.5,
+    "finalResponseHeadersStart": 0,
+    "responseEnd": 13.400000035762787,
+    "transferSize": 0,
+    "encodedBodySize": 88826,
+    "decodedBodySize": 88826,
+    "responseStatus": 200,
+    "serverTiming": [],
+    "unloadEventStart": 14.5,
+    "unloadEventEnd": 14.5,
+    "domInteractive": 39.80000001192093,
+    "domContentLoadedEventStart": 47.60000002384186,
+    "domContentLoadedEventEnd": 47.60000002384186,
+    "domComplete": 47.69999998807907,
+    "loadEventStart": 47.80000001192093,
+    "loadEventEnd": 68.30000001192093,
+    "type": "navigate",
+    "redirectCount": 0,
+    "activationStart": 0,
+    "criticalCHRestart": 0,
+    "notRestoredReasons": null,
+    "confidence": {
+      "randomizedTriggerRate": 0.4994798,
+      "value": "high"
+    }
+  },
+  "paintTiming": [
+    {
+      "name": "first-paint",
+      "entryType": "paint",
+      "startTime": 52,
+      "duration": 0,
+      "paintTime": 43.30000001192093,
+      "presentationTime": 52
+    },
+    {
+      "name": "first-contentful-paint",
+      "entryType": "paint",
+      "startTime": 52,
+      "duration": 0,
+      "paintTime": 43.30000001192093,
+      "presentationTime": 52
+    }
+  ],
+  "screenOpenMeasures": [
+    {
+      "name": "open_science",
+      "duration": 138.5,
+      "startTime": 920.1000000238419
+    },
+    {
+      "name": "open_freeMode",
+      "duration": 82.79999995231628,
+      "startTime": 1112.4000000357628
+    },
+    {
+      "name": "open_achievements",
+      "duration": 151.0999999642372,
+      "startTime": 1248.6000000238419
+    },
+    {
+      "name": "open_settings",
+      "duration": 66.80000001192093,
+      "startTime": 1447.800000011921
+    },
+    {
+      "name": "open_endless",
+      "duration": 102.09999996423721,
+      "startTime": 1551.4000000357628
+    },
+    {
+      "name": "open_levelEditor",
+      "duration": 451.5,
+      "startTime": 1698.1000000238419
+    },
+    {
+      "name": "open_world1intro",
+      "duration": 145.69999998807907,
+      "startTime": 3124.800000011921
+    }
+  ],
+  "cdpMetrics": {
+    "before": {
+      "Timestamp": 365967.445933,
+      "AudioHandlers": 10,
+      "AudioWorkletProcessors": 0,
+      "Documents": 4,
+      "Frames": 1,
+      "JSEventListeners": 218,
+      "LayoutObjects": 366,
+      "MediaKeySessions": 0,
+      "MediaKeys": 0,
+      "Nodes": 2340,
+      "Resources": 32,
+      "ContextLifecycleStateObservers": 13,
+      "V8PerContextDatas": 6,
+      "WorkerGlobalScopes": 1,
+      "UACSSResources": 0,
+      "RTCPeerConnections": 0,
+      "ResourceFetchers": 6,
+      "AdSubframes": 0,
+      "DetachedScriptStates": 4,
+      "ArrayBufferContents": 12,
+      "LayoutCount": 0,
+      "RecalcStyleCount": 1,
+      "LayoutDuration": 0,
+      "RecalcStyleDuration": 5.8e-05,
+      "DevToolsCommandDuration": 0.00027,
+      "ScriptDuration": 0,
+      "V8CompileDuration": 0,
+      "TaskDuration": 0.001693,
+      "TaskOtherDuration": 0.001365,
+      "ThreadTime": 0.001488,
+      "ProcessTime": 0.364343,
+      "JSHeapUsedSize": 2499076,
+      "JSHeapTotalSize": 3407872,
+      "FirstMeaningfulPaint": 0,
+      "DomContentLoaded": 365967.401883,
+      "NavigationStart": 365967.378211
+    },
+    "after": {
+      "Timestamp": 365979.561921,
+      "AudioHandlers": 57,
+      "AudioWorkletProcessors": 0,
+      "Documents": 25,
+      "Frames": 11,
+      "JSEventListeners": 527,
+      "LayoutObjects": 4410,
+      "MediaKeySessions": 0,
+      "MediaKeys": 0,
+      "Nodes": 7156,
+      "Resources": 55,
+      "ContextLifecycleStateObservers": 41,
+      "V8PerContextDatas": 8,
+      "WorkerGlobalScopes": 1,
+      "UACSSResources": 0,
+      "RTCPeerConnections": 0,
+      "ResourceFetchers": 27,
+      "AdSubframes": 0,
+      "DetachedScriptStates": 6,
+      "ArrayBufferContents": 19,
+      "LayoutCount": 51,
+      "RecalcStyleCount": 247,
+      "LayoutDuration": 0.404334,
+      "RecalcStyleDuration": 0.046159,
+      "DevToolsCommandDuration": 0.146467,
+      "ScriptDuration": 0.18519,
+      "V8CompileDuration": 2.5e-05,
+      "TaskDuration": 1.525465,
+      "TaskOtherDuration": 0.74329,
+      "ThreadTime": 1.437047,
+      "ProcessTime": 3.800994,
+      "JSHeapUsedSize": 5557920,
+      "JSHeapTotalSize": 6643712,
+      "FirstMeaningfulPaint": 365967.553893,
+      "DomContentLoaded": 365967.552743,
+      "NavigationStart": 365967.505207
+    }
+  },
+  "memory": {
+    "usedJSHeapSize": 10000000,
+    "totalJSHeapSize": 10000000,
+    "jsHeapSizeLimit": 3760000000
+  },
+  "longTasks": [
+    {
+      "startTime": 976.8000000119209,
+      "duration": 53,
+      "name": "self",
+      "attribution": [
+        "unknown"
+      ]
+    },
+    {
+      "startTime": 2227.400000035763,
+      "duration": 54,
+      "name": "self",
+      "attribution": [
+        "unknown"
+      ]
+    },
+    {
+      "startTime": 2422.5,
+      "duration": 69,
+      "name": "self",
+      "attribution": [
+        "unknown"
+      ]
+    }
+  ],
+  "tracePath": "tests\\perf-trace.json"
+}

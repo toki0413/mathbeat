@@ -1,0 +1,30 @@
+#!/bin/bash
+# Minimal gcc preprocessor for windres
+if [ "$1" != "-E" ]; then
+    echo "Fake gcc: only -E supported" >&2
+    exit 1
+fi
+
+shift
+output=""
+input=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -I*|-D*|-xc) ;;
+        -o) output="$2"; shift ;;
+        *.rc|*.h) input="$1" ;;
+        -*) ;;
+    esac
+    shift
+done
+
+if [ -z "$input" ]; then
+    echo "No input file" >&2
+    exit 1
+fi
+
+if [ -n "$output" ]; then
+    cat "$input" > "$output"
+else
+    cat "$input"
+fi

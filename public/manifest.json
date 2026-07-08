@@ -1,0 +1,15 @@
+{
+  "name": "数律 MathBeat",
+  "short_name": "MathBeat",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FFF8F0",
+  "theme_color": "#FF8C42",
+  "icons": [
+    { "src": "icons/32x32.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "icons/128x128.png", "sizes": "128x128", "type": "image/png" },
+    { "src": "icons/256x256.png", "sizes": "256x256", "type": "image/png" }
+  ],
+  "description": "数学与音乐的交叉探索",
+  "lang": "zh-CN"
+}

@@ -1,0 +1,747 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=480, initial-scale=1.0" />
+    <title>数律作曲台 — MathBeat Composer</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      :root {
+        --bg: #fff8f0;
+        --bg2: #f5ede3;
+        --bg3: #ede4d8;
+        --accent: #ff8c42;
+        --accent2: #e8587a;
+        --accent3: #ffd166;
+        --text: #2d2016;
+        --text2: #6b5d4f;
+        --text3: #9e8e7e;
+        --on: #ff8c42;
+        --off: #e8dfd5;
+        --solo: #4caf50;
+        --mute: #e74c3c;
+        --border: #d8cfc5;
+        --shadow: 0 2px 8px rgba(45, 32, 22, 0.1);
+        --w1: #ff8c42;
+        --w2: #e8587a;
+        --w3: #7c6bff;
+        --w4: #4ecdc4;
+        --w5: #ffd166;
+        --w6: #7bc67e;
+        --w7: #9b59b6;
+      }
+      html,
+      body {
+        width: 480px;
+        height: 900px;
+        overflow: hidden;
+        font-family:
+          system-ui,
+          -apple-system,
+          'Segoe WPC',
+          sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        font-size: 14px;
+        user-select: none;
+      }
+      #app {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        width: 100%;
+      }
+
+      /* 加载画面 */
+      #loadingScreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 480px;
+        height: 900px;
+        z-index: 3000;
+        background: linear-gradient(135deg, #fff0e0, #ffe4d4, #ffd6c8);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.5s;
+      }
+      #loadingScreen.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .loading-title {
+        font-size: 40px;
+        font-weight: 900;
+        letter-spacing: 4px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+      }
+      .loading-sub {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text3);
+        letter-spacing: 6px;
+        margin-bottom: 24px;
+      }
+      .loading-bar-wrap {
+        width: 260px;
+        height: 8px;
+        background: rgba(0, 0, 0, 0.08);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .loading-bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        border-radius: 4px;
+        transition: width 0.3s;
+      }
+      .loading-text {
+        margin-top: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text3);
+      }
+
+      /* 顶部栏 */
+      #topbar {
+        display: flex;
+        align-items: center;
+        padding: 4px 8px;
+        background: var(--bg2);
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+        height: 42px;
+        gap: 6px;
+      }
+      #btn-back {
+        padding: 3px 8px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: #fff;
+        color: var(--text2);
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      #btn-back:hover {
+        background: var(--bg3);
+      }
+      #topbar-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 1px;
+        flex: 1;
+        text-align: center;
+      }
+      #topbar-controls {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      #topbar-controls button {
+        width: 32px;
+        height: 32px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+      }
+      .btn-play {
+        background: var(--accent);
+        color: #fff;
+      }
+      .btn-play:hover {
+        background: #e07830;
+      }
+      .btn-stop {
+        background: var(--bg3);
+        color: var(--text);
+      }
+      .btn-stop:hover {
+        background: var(--border);
+      }
+      #bpm-display {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text);
+        min-width: 36px;
+        text-align: center;
+      }
+      .bpm-btn {
+        width: 24px !important;
+        height: 24px !important;
+        font-size: 14px !important;
+        border-radius: 4px !important;
+        background: var(--bg3);
+        color: var(--text2);
+        border: 1px solid var(--border);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .bpm-btn:hover {
+        background: var(--border);
+      }
+      #time-display {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text2);
+        min-width: 44px;
+        text-align: center;
+      }
+      .topbar-right-btn {
+        padding: 3px 8px;
+        border: 1px solid var(--accent);
+        border-radius: 6px;
+        background: #fff;
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.15s;
+      }
+      .topbar-right-btn:hover:not(:disabled) {
+        background: var(--accent);
+        color: #fff;
+      }
+      .topbar-right-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        border-color: var(--text3);
+        color: var(--text3);
+      }
+      #btn-bg-music {
+        width: 32px;
+        height: 32px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fff;
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #btn-bg-music:hover {
+        background: var(--bg3);
+      }
+
+      /* 歌曲时间线 */
+      #timeline {
+        display: flex;
+        align-items: stretch;
+        height: 42px;
+        background: var(--bg2);
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+        overflow-x: auto;
+      }
+      .tl-section {
+        flex-shrink: 0;
+        padding: 2px 4px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        border-right: 1px solid var(--border);
+        transition: background 0.15s;
+        position: relative;
+        min-width: 50px;
+      }
+      .tl-section:hover {
+        background: var(--bg3);
+      }
+      .tl-section.active {
+        background: rgba(255, 140, 66, 0.25);
+      }
+      .tl-section .tl-name {
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .tl-section .tl-info {
+        font-size: 9px;
+        opacity: 0.7;
+        white-space: nowrap;
+      }
+      .tl-section .tl-dur {
+        font-size: 8px;
+        opacity: 0.5;
+        white-space: nowrap;
+      }
+      .tl-section canvas {
+        width: 100%;
+        height: 6px;
+        border-radius: 2px;
+        margin-top: 1px;
+      }
+
+      /* 音阶控制 */
+      #scale-bar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 10px;
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+        height: 28px;
+      }
+      #scale-bar label {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text2);
+      }
+      #scale-bar select {
+        font-size: 13px;
+        padding: 1px 4px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: #fff;
+        cursor: pointer;
+      }
+
+      /* 轨道区域 */
+      #tracks {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 3px 0;
+      }
+      .track-lane {
+        margin: 2px 6px;
+        background: var(--bg2);
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+        position: relative;
+      }
+      .track-header {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        background: var(--bg3);
+        border-bottom: 1px solid var(--border);
+      }
+      .track-name {
+        font-size: 15px;
+        font-weight: 700;
+        min-width: 36px;
+        color: var(--accent);
+      }
+      .track-ts {
+        font-size: 11px;
+        color: var(--text3);
+        min-width: 28px;
+      }
+      .track-len-sel {
+        font-size: 11px;
+        padding: 0 2px;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        background: #fff;
+        cursor: pointer;
+      }
+      .track-vol {
+        width: 50px;
+        height: 4px;
+        -webkit-appearance: none;
+        appearance: none;
+        background: var(--border);
+        border-radius: 2px;
+        outline: none;
+        cursor: pointer;
+      }
+      .track-vol::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--accent);
+        cursor: pointer;
+      }
+      .btn-ms {
+        width: 20px;
+        height: 20px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        transition: all 0.1s;
+      }
+      .btn-ms.muted {
+        background: var(--mute);
+        color: #fff;
+        border-color: var(--mute);
+      }
+      .btn-ms.soloed {
+        background: var(--solo);
+        color: #fff;
+        border-color: var(--solo);
+      }
+      .track-canvas-wrap {
+        padding: 3px 8px;
+        overflow-x: auto;
+      }
+      .track-canvas-wrap canvas {
+        display: block;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      /* 锁定轨道覆盖层 */
+      .lock-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 4px,
+          rgba(0, 0, 0, 0.04) 4px,
+          rgba(0, 0, 0, 0.04) 8px
+        );
+        z-index: 5;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        pointer-events: none;
+        border-radius: 8px;
+      }
+      .lock-overlay .lock-icon {
+        font-size: 28px;
+        opacity: 0.6;
+      }
+      .lock-overlay .lock-text {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text3);
+        background: rgba(255, 248, 240, 0.85);
+        padding: 2px 10px;
+        border-radius: 10px;
+      }
+      .unlock-badge {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 1px 6px;
+        border-radius: 8px;
+        color: #fff;
+        margin-left: 4px;
+      }
+
+      /* 数学生成面板 */
+      #math-panel {
+        flex-shrink: 0;
+        background: var(--bg2);
+        border-top: 1px solid var(--border);
+        max-height: 260px;
+        overflow-y: auto;
+      }
+      #math-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 5px 12px;
+        cursor: pointer;
+        background: var(--bg3);
+        border-bottom: 1px solid var(--border);
+      }
+      #math-toggle h2 {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      #math-toggle .arrow {
+        font-size: 14px;
+        transition: transform 0.2s;
+      }
+      #math-toggle.open .arrow {
+        transform: rotate(180deg);
+      }
+      #math-content {
+        padding: 6px 10px;
+        display: none;
+      }
+      #math-content.open {
+        display: block;
+      }
+      .math-tabs {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 6px;
+      }
+      .math-tab {
+        padding: 4px 10px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .math-tab.active {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .math-tab:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .math-row {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 5px;
+        flex-wrap: wrap;
+      }
+      .math-row label {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text2);
+        min-width: 56px;
+      }
+      .math-row select,
+      .math-row input[type='number'] {
+        font-size: 13px;
+        padding: 2px 5px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: #fff;
+      }
+      .math-row input[type='number'] {
+        width: 48px;
+      }
+      .math-row input[type='text'] {
+        font-size: 13px;
+        padding: 2px 5px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: #fff;
+        width: 56px;
+      }
+      .btn-gen {
+        padding: 4px 12px;
+        border: none;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn-gen:hover {
+        background: #e07830;
+      }
+      .btn-gen:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      #math-explain {
+        font-size: 12px;
+        color: var(--text3);
+        margin-top: 4px;
+        padding: 5px 8px;
+        background: var(--bg);
+        border-radius: 6px;
+        line-height: 1.5;
+      }
+      .gen-locked {
+        color: var(--text3) !important;
+        font-style: italic;
+      }
+      .sim-panel {
+        display: none;
+      }
+      .sim-panel.active {
+        display: block;
+      }
+      .sim-mapping {
+        font-size: 12px;
+        color: var(--text2);
+        margin: 4px 0;
+        line-height: 1.6;
+      }
+      .sim-mapping b {
+        color: var(--accent);
+      }
+
+      /* 分享按钮 */
+      #btn-share {
+        padding: 3px 8px;
+        border: 1px solid var(--accent3);
+        border-radius: 6px;
+        background: #fff;
+        color: var(--accent3);
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.15s;
+      }
+      #btn-share:hover {
+        background: var(--accent3);
+        color: #fff;
+      }
+
+      /* 滚动条 */
+      ::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loadingScreen">
+      <div class="loading-title">数律作曲台</div>
+      <div class="loading-sub">COMPOSER</div>
+      <div class="loading-bar-wrap"><div class="loading-bar" id="loadingBar"></div></div>
+      <div class="loading-text" id="loadingText">正在加载音色库...</div>
+    </div>
+    <div id="app">
+      <div id="topbar">
+        <button id="btn-back">← 返回</button>
+        <span id="topbar-title">数律作曲台</span>
+        <div id="topbar-controls">
+          <button class="bpm-btn" id="bpm-down" title="BPM-10">−</button>
+          <span id="bpm-display">100</span>
+          <button class="bpm-btn" id="bpm-up" title="BPM+10">+</button>
+          <button class="btn-play" id="btn-play" title="播放">▶</button>
+          <button class="btn-stop" id="btn-stop" title="停止">■</button>
+          <span id="time-display">0:00</span>
+          <button id="btn-bg-music" title="背景音乐">🔇</button>
+          <button id="btn-share" title="分享">分享</button>
+          <button class="topbar-right-btn" id="btn-import" title="导入作品">导入</button>
+          <input type="file" id="import-file-input" accept=".json,.txt" style="display:none" />
+          <button class="topbar-right-btn" id="btn-export-midi" title="导出MIDI">MIDI</button>
+        </div>
+      </div>
+      <div id="timeline"></div>
+      <div id="scale-bar">
+        <label>根音</label>
+        <select id="sel-root">
+          <option>E</option>
+          <option>C</option>
+          <option>D</option>
+          <option>F</option>
+          <option>G</option>
+          <option>A</option>
+          <option>B</option>
+        </select>
+        <label>音阶</label>
+        <select id="sel-scale">
+          <option value="minor">自然小调</option>
+          <option value="major">大调</option>
+          <option value="dorian">多利亚</option>
+          <option value="mixolydian">混合利底亚</option>
+          <option value="pentatonic">五声</option>
+          <option value="wholetone">全音</option>
+          <option value="chromatic">半音阶</option>
+        </select>
+      </div>
+      <div id="tracks"></div>
+      <div id="math-panel">
+        <div id="math-toggle">
+          <h2>📐 数学生成</h2>
+          <span class="arrow">▼</span>
+        </div>
+        <div id="math-content">
+          <div class="math-tabs">
+            <button class="math-tab active" data-tab="math">数学</button>
+            <button class="math-tab" data-tab="sim" id="tab-sim">🔬 科学之声</button>
+          </div>
+          <div id="panel-math">
+            <div class="math-row">
+              <label>类型</label
+              ><select id="gen-type"></select>
+            </div>
+            <div class="math-row" id="gen-params-row"><label>参数</label><span id="gen-params"></span></div>
+            <div class="math-row">
+              <label>目标轨道</label
+              ><select id="gen-target"></select>
+            </div>
+            <div class="math-row">
+              <label>子目标</label>
+              <select id="gen-sub">
+                <option value="kick">底鼓</option>
+                <option value="snare">军鼓</option>
+                <option value="hihat">踩镲</option>
+                <option value="pattern">主模式</option>
+              </select>
+            </div>
+            <div class="math-row"><button class="btn-gen" id="btn-generate">生成并应用</button></div>
+            <div id="math-explain">选择一种数学生成器，设置参数后应用到指定轨道。</div>
+          </div>
+          <div id="panel-sim" class="sim-panel">
+            <div class="math-row">
+              <label>数据类型</label>
+              <select id="sim-type">
+                <option value="dft">DFT 能带</option>
+                <option value="md">MD 轨迹</option>
+                <option value="fem">FEM 应力</option>
+                <option value="cfd">CFD 流场</option>
+                <option value="xrd">XRD 衍射</option>
+                <option value="dna">DNA 序列</option>
+                <option value="pulsar">Pulsar 脉冲星</option>
+              </select>
+            </div>
+            <div class="math-row">
+              <button class="btn-gen" id="btn-sim-sample">加载示例数据</button>
+              <button class="btn-gen" id="btn-sim-import" style="background: var(--accent2)">导入文件</button>
+              <input type="file" id="sim-file-input" accept=".json" style="display: none" />
+            </div>
+            <div class="sim-mapping" id="sim-mapping-info">选择数据类型查看映射规则</div>
+            <div class="math-row">
+              <label>目标轨道</label
+              ><select id="sim-target"></select>
+            </div>
+            <div class="math-row">
+              <button class="btn-gen" id="btn-sim-gen" style="background: var(--w7)">生成</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/composer.ts"></script>
+  </body>
+</html>

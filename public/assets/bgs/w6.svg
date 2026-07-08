@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 900" width="480" height="900">
+  <defs>
+    <linearGradient id="b6" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a140a"/>
+      <stop offset="100%" stop-color="#050a05"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="900" fill="url(#b6)"/>
+  <!-- 递归分形暗示：树状分支 -->
+  <g stroke="#7BC67E" stroke-width="0.5" opacity="0.06">
+    <line x1="240" y1="800" x2="240" y2="700"/>
+    <line x1="240" y1="700" x2="200" y2="620"/>
+    <line x1="240" y1="700" x2="280" y2="620"/>
+    <line x1="200" y1="620" x2="170" y2="560"/>
+    <line x1="200" y1="620" x2="230" y2="560"/>
+    <line x1="280" y1="620" x2="250" y2="560"/>
+    <line x1="280" y1="620" x2="310" y2="560"/>
+  </g>
+  <!-- 斐波那契螺旋暗示 -->
+  <path d="M 240 400 Q 260 380 280 400 Q 300 420 280 440 Q 260 460 240 440" fill="none" stroke="#7BC67E" stroke-width="1" opacity="0.04"/>
+</svg>

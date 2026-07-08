@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 900" width="480" height="900">
+  <defs>
+    <linearGradient id="b4" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a1514"/>
+      <stop offset="100%" stop-color="#050a0a"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="900" fill="url(#b4)"/>
+  <!-- 同心圆暗示 CRT -->
+  <circle cx="240" cy="450" r="200" fill="none" stroke="#4ECDC4" stroke-width="0.5" opacity="0.04"/>
+  <circle cx="240" cy="450" r="150" fill="none" stroke="#4ECDC4" stroke-width="0.5" opacity="0.03"/>
+  <circle cx="240" cy="450" r="100" fill="none" stroke="#4ECDC4" stroke-width="0.5" opacity="0.02"/>
+  <!-- 螺旋暗示多节奏 -->
+  <path d="M 240 450 Q 260 430 280 450 Q 300 470 320 450" fill="none" stroke="#4ECDC4" stroke-width="1" opacity="0.03"/>
+  <path d="M 240 450 Q 220 470 200 450 Q 180 430 160 450" fill="none" stroke="#4ECDC4" stroke-width="1" opacity="0.03"/>
+</svg>

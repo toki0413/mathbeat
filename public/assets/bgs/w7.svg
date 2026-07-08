@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 900" width="480" height="900">
+  <defs>
+    <linearGradient id="b7" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#140a1a"/>
+      <stop offset="100%" stop-color="#0a050d"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="900" fill="url(#b7)"/>
+  <!-- 随机分布点 -->
+  <circle cx="120" cy="200" r="2" fill="#9B5DE5" opacity="0.06"/>
+  <circle cx="340" cy="280" r="3" fill="#9B5DE5" opacity="0.05"/>
+  <circle cx="200" cy="350" r="1.5" fill="#9B5DE5" opacity="0.07"/>
+  <circle cx="380" cy="420" r="2.5" fill="#9B5DE5" opacity="0.04"/>
+  <circle cx="80" cy="500" r="2" fill="#9B5DE5" opacity="0.06"/>
+  <circle cx="300" cy="580" r="3" fill="#9B5DE5" opacity="0.05"/>
+  <circle cx="160" cy="660" r="1.5" fill="#9B5DE5" opacity="0.07"/>
+  <circle cx="420" cy="740" r="2" fill="#9B5DE5" opacity="0.04"/>
+  <circle cx="240" cy="800" r="3" fill="#9B5DE5" opacity="0.05"/>
+  <!-- 正态分布钟形曲线 -->
+  <path d="M 80 600 Q 160 450 240 450 Q 320 450 400 600" fill="none" stroke="#9B5DE5" stroke-width="1" opacity="0.04"/>
+</svg>

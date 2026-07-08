@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+release/
+
+# Tauri / Rust
+src-tauri/target/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local env
+.env
+.env.local
+
+# Test artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Temp files
+*.tmp
+*.bak
+server.log
+srv.log
+tauri-build.log

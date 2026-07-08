@@ -1,0 +1,27 @@
+module.exports = {
+  root: true,
+  env: { browser: true, es2020: true, node: true },
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+  ],
+  parser: '@typescript-eslint/parser',
+  parserOptions: { ecmaVersion: 2020, sourceType: 'module' },
+  plugins: ['@typescript-eslint'],
+  rules: {
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-unused-vars': 'off',
+    '@typescript-eslint/ban-ts-comment': 'off',
+    '@typescript-eslint/no-require-imports': 'off',
+    'no-undef': 'off',
+    'no-empty': 'off',
+    'no-useless-escape': 'off',
+    'no-cond-assign': 'off',
+    'no-fallthrough': 'off',
+    'no-irregular-whitespace': 'off',
+    'prefer-const': 'off',
+    'no-constant-condition': 'off',
+    'no-inner-declarations': 'off',
+  },
+  ignorePatterns: ['dist/', 'src-tauri/', 'node_modules/', '*.js'],
+};

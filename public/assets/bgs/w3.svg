@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 900" width="480" height="900">
+  <defs>
+    <linearGradient id="b3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f0a1a"/>
+      <stop offset="100%" stop-color="#08050d"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="900" fill="url(#b3)"/>
+  <!-- 正弦波背景 -->
+  <path d="M 0 200 Q 60 150 120 200 Q 180 250 240 200 Q 300 150 360 200 Q 420 250 480 200" fill="none" stroke="#7C6BFF" stroke-width="1" opacity="0.05"/>
+  <path d="M 0 300 Q 60 350 120 300 Q 180 250 240 300 Q 300 350 360 300 Q 420 250 480 300" fill="none" stroke="#7C6BFF" stroke-width="1" opacity="0.04"/>
+  <path d="M 0 600 Q 60 550 120 600 Q 180 650 240 600 Q 300 550 360 600 Q 420 650 480 600" fill="none" stroke="#7C6BFF" stroke-width="1" opacity="0.03"/>
+  <!-- 频率标记点 -->
+  <circle cx="120" cy="200" r="3" fill="#7C6BFF" opacity="0.05"/>
+  <circle cx="240" cy="200" r="3" fill="#7C6BFF" opacity="0.05"/>
+  <circle cx="360" cy="200" r="3" fill="#7C6BFF" opacity="0.05"/>
+</svg>

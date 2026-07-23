@@ -71,6 +71,8 @@ export interface GameState {
   w6RecursiveLayersUsed?: boolean;
   w7MarkovEdited?: boolean;
   w8BossCoveredAll?: boolean;
+  // Harmonics Lab (Fourier / additive synthesis) tracking
+  waveLabChallengesDone?: number;
 }
 
 export const CURRENT_SAVE_VERSION = '1.1';

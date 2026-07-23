@@ -70,4 +70,18 @@ export function initEventDelegation(): void {
     if (!action || !inputHandlers[action]) return;
     inputHandlers[action](e);
   });
+
+  // Keyboard activation for data-action elements (Enter / Space), so any
+  // focusable [data-action] is operable without a pointer (WCAG 2.1.1).
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+    const el = (document.activeElement as HTMLElement | null)?.closest('[data-action]') as HTMLElement | null;
+    if (!el) return;
+    if (el.tagName === 'BUTTON' || el.tagName === 'A') return; // native elements handle their own activation
+    const action = el.dataset.action;
+    if (!action || !clickHandlers[action]) return;
+    e.preventDefault();
+    const args = parseArgs(el);
+    clickHandlers[action](e, ...args);
+  });
 }

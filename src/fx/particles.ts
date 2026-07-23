@@ -8,16 +8,46 @@ let isAnimating = false;
 const MAX_PARTICLES = 300;
 const particlePool: any[] = [];
 
+/** Reduced-motion users get no particle animation (WCAG 2.3.3). */
+function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined' || !window.matchMedia) return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/** Sync the canvas backing-store resolution with its CSS size (DPR-aware)
+ *  so particles render crisply and at correct coordinates on any screen. */
+function syncCanvasSize() {
+  if (!pCanvas) return;
+  const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
+  const rect = pCanvas.getBoundingClientRect();
+  const cssW = Math.max(1, Math.floor(rect.width));
+  const cssH = Math.max(1, Math.floor(rect.height));
+  if (pCanvas.width !== cssW * dpr || pCanvas.height !== cssH * dpr) {
+    pCanvas.width = cssW * dpr;
+    pCanvas.height = cssH * dpr;
+    pCtx?.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+}
+
 function ensureCanvas() {
   if (canvasReady) return;
   if (typeof document === 'undefined') return;
   pCanvas = document.getElementById('particleCanvas') as HTMLCanvasElement | null;
   if (pCanvas) {
     pCtx = pCanvas.getContext('2d') as CanvasRenderingContext2D | null;
-    pCanvas.width = 480;
-    pCanvas.height = 900;
+    syncCanvasSize();
+    // Keep the backing store in sync across resize / orientation change.
+    window.addEventListener('resize', syncCanvasSize);
+    window.addEventListener('orientationchange', syncCanvasSize);
   }
   canvasReady = true;
+}
+
+/** Canvas CSS-pixel dimensions (coordinate space used by spawn helpers). */
+function canvasSize(): { w: number; h: number } {
+  if (!pCanvas) return { w: 480, h: 900 };
+  const r = pCanvas.getBoundingClientRect();
+  return { w: r.width || 480, h: r.height || 900 };
 }
 
 function startAnimation() {
@@ -37,6 +67,8 @@ function releaseParticle(p: any) {
 export function spawnParticles(x: number, y: number, color: string, count: number, opts?: any) {
   ensureCanvas();
   opts = opts || {};
+  // Respect OS reduced-motion: skip particle fx entirely (audio/toasts remain).
+  if (prefersReducedMotion()) return;
   // 避免粒子风暴导致渲染卡顿：超过上限时拒绝新增
   if (particles.length >= MAX_PARTICLES) return;
   const addCount = Math.min(count, MAX_PARTICLES - particles.length);
@@ -61,13 +93,19 @@ export function spawnParticles(x: number, y: number, color: string, count: numbe
 
 export function spawnParticlesAtElement(el: Element | null, color: string, count: number, opts?: any) {
   if (!el || typeof document === 'undefined') return;
+  ensureCanvas();
   const r = el.getBoundingClientRect();
-  spawnParticles(r.left + r.width / 2, r.top + r.height / 2, color, count, opts);
+  // Convert viewport coordinates to canvas-local CSS coordinates (the canvas
+  // is centered on wide screens, so its left/top origin is not always 0).
+  const cx = pCanvas ? pCanvas.getBoundingClientRect().left : 0;
+  const cy = pCanvas ? pCanvas.getBoundingClientRect().top : 0;
+  spawnParticles(r.left + r.width / 2 - cx, r.top + r.height / 2 - cy, color, count, opts);
 }
 
 export function spawnCorrectParticles() {
+  const { w } = canvasSize();
   for (let i = 0; i < 20; i++)
-    spawnParticles(Math.random() * 480, -10, '#7BC67E', 1, {
+    spawnParticles(Math.random() * w, -10, '#7BC67E', 1, {
       speed: 1,
       gravity: 0.15,
       shape: 'star',
@@ -78,10 +116,11 @@ export function spawnCorrectParticles() {
 
 export function spawnComboParticles() {
   const colors = ['#FF8C42', '#E8587A', '#FFD166', '#7BC67E', '#7C6BFF', '#4ECDC4'];
+  const { w, h } = canvasSize();
   for (let i = 0; i < 30; i++) {
     const a = (i / 30) * Math.PI * 4;
     const r = 30 + i * 3;
-    spawnParticles(240 + Math.cos(a) * r, 450 + Math.sin(a) * r, colors[i % colors.length], 1, {
+    spawnParticles(w / 2 + Math.cos(a) * r, h / 2 + Math.sin(a) * r, colors[i % colors.length], 1, {
       speed: 2,
       gravity: 0.02,
       minR: 3,
@@ -92,12 +131,13 @@ export function spawnComboParticles() {
 
 export function spawnConfetti() {
   const colors = ['#FF8C42', '#E8587A', '#FFD166', '#7BC67E', '#7C6BFF', '#4ECDC4'];
+  const { w, h } = canvasSize();
   for (let i = 0; i < 40; i++) {
     const a = Math.random() * Math.PI * 2;
     const sp = 2 + Math.random() * 4;
     spawnParticles(
-      240 + Math.cos(a) * 80,
-      400 + Math.sin(a) * 80,
+      w / 2 + Math.cos(a) * 80,
+      h * 0.45 + Math.sin(a) * 80,
       colors[Math.floor(Math.random() * colors.length)],
       1,
       { speed: sp, gravity: 0.1, minR: 3, maxR: 6 }
@@ -126,7 +166,8 @@ export function animateParticles() {
     isAnimating = false;
     return;
   }
-  pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+  const { w, h } = canvasSize();
+  pCtx.clearRect(0, 0, w, h);
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
     p.x += p.vx;

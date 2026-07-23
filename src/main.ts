@@ -271,6 +271,7 @@ import * as dailyModule from './daily';
 import * as scienceModule from './science';
 import * as scienceDeep from './science-deep';
 import * as materiomusic from './materiomusic';
+import * as waveLab from './wave-lab';
 import * as utils from './utils';
 import * as world1 from './worlds/world1';
 import * as world2 from './worlds/world2';
@@ -314,6 +315,66 @@ function tryStartBgOnce() {
 
 /* ===== INIT ===== */
 
+/* Accessibility enhancement: make non-native [data-action] elements keyboard-
+ * focusable, give them role=button, and label emoji/symbol-only controls so
+ * screen-reader users can operate the app without a pointer (WCAG 2.1/4.1).
+ * Runs once and via a MutationObserver for dynamically rendered screens. */
+const A11Y_ACTION_LABELS: Record<string, string> = {
+  back: '返回',
+  closeScaleLab: '返回',
+  closeProteinMode: '返回',
+  closeWebMode: '返回',
+  w1TogglePlay: '播放或暂停',
+  w1Reset: '重置',
+  w1Verify: '验证',
+  nextLevel: '下一关',
+  showHome: '返回首页',
+  openScienceMode: '打开科学之声',
+  openScaleLab: '打开音阶实验室',
+  openProteinMode: '打开蛋白质声化',
+  openWebMode: '打开蜘蛛网声化',
+  openWaveLab: '打开谐波实验室',
+  closeWaveLab: '返回',
+  wlTogglePlay: '播放或暂停谐波',
+  wlPreset: '应用波形预设',
+  wlChallenge: '开始猜波形挑战',
+  wlVerifyChallenge: '验证挑战',
+};
+
+function labelForAction(el: HTMLElement): string | null {
+  const action = el.dataset.action || '';
+  if (A11Y_ACTION_LABELS[action]) return A11Y_ACTION_LABELS[action];
+  const text = (el.textContent || '').trim();
+  // Emoji / single-symbol-only controls need a textual label.
+  if (text && text.length <= 3 && /[^\u4e00-\u9fa5a-zA-Z0-9]/.test(text)) {
+    return action || text;
+  }
+  return null;
+}
+
+function enhanceA11y(root: ParentNode) {
+  const nodes = root.querySelectorAll<HTMLElement>('[data-action]:not([data-a11y])');
+  nodes.forEach((el) => {
+    el.setAttribute('data-a11y', '1');
+    const tag = el.tagName;
+    if (tag !== 'BUTTON' && tag !== 'A' && tag !== 'INPUT' && tag !== 'SELECT' && tag !== 'TEXTAREA') {
+      if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+      if (!el.hasAttribute('role')) el.setAttribute('role', 'button');
+    }
+    const label = labelForAction(el);
+    if (label && !el.hasAttribute('aria-label')) el.setAttribute('aria-label', label);
+  });
+  // Decorative canvases should be hidden from assistive tech.
+  root.querySelectorAll('canvas:not([aria-hidden])').forEach((c) => c.setAttribute('aria-hidden', 'true'));
+}
+
+function startA11yObserver() {
+  if (typeof MutationObserver === 'undefined') return;
+  enhanceA11y(document.body);
+  const obs = new MutationObserver(() => enhanceA11y(document.body));
+  obs.observe(document.body, { childList: true, subtree: true });
+}
+
 function startHomeVisualizer() {
   const canvas = document.getElementById('homeVisualizer') as HTMLCanvasElement | null;
   if (!canvas) return;
@@ -352,7 +413,9 @@ function startHomeVisualizer() {
 window.onload = function () {
   // 初始化事件委托，接管 data-action / data-input 的全局点击与输入监听
   initEventDelegation();
+  startA11yObserver();
   materiomusic.initMateriomusicEvents();
+  waveLab.initWaveLabEvents();
   Store.load();
   setSoundPack(Store.state.settings.soundPack || 'mathRock');
   getAudioCtx();
@@ -554,6 +617,9 @@ const handlers = {
   openScaleLab: materiomusic.openScaleLab,
   openProteinMode: materiomusic.openProteinMode,
   openWebMode: materiomusic.openWebMode,
+  // wave lab (Fourier / additive synthesis)
+  openWaveLab: waveLab.openWaveLab,
+  closeWaveLab: waveLab.closeWaveLab,
   // science-deep (fracture/flame materiomusic)
   openFractureMode: scienceDeep.openFractureMode,
   openFlameMode: scienceDeep.openFlameMode,

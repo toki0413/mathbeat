@@ -367,6 +367,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'recursive_layers', name: '分形编曲家', desc: '在世界6同时开启旋律、质数和弦与递归层', icon: '🌿', cat: 'skill' },
   { id: 'markov_editor', name: '概率作曲家', desc: '在世界7编辑马尔可夫矩阵并生成旋律', icon: '🎲', cat: 'explore' },
   { id: 'graph_hamilton', name: '哈密顿指挥', desc: '在世界8 Boss用最少步数覆盖所有节点', icon: '🕸️', cat: 'skill' },
+  // Harmonics Lab (Fourier / additive synthesis) achievements
+  { id: 'wavelab_first', name: '傅里叶学徒', desc: '在谐波实验室首次通过猜波形挑战', icon: '〰️', cat: 'explore' },
+  { id: 'wavelab_master', name: '频谱大师', desc: '在谐波实验室通过3次猜波形挑战', icon: '🎛️', cat: 'skill' },
 ];
 
 export const MATH_CONCEPTS: Record<string, MathConcept> = {

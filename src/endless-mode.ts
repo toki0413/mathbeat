@@ -1,7 +1,7 @@
 import { Store } from './store';
 import { WORLDS, CONCEPT_TO_WORLD } from './worlds';
 import { getAudioCtx, scheduleToneAt, playCorrect, playWrong, scheduleKickAt, scheduleSnareAt } from './audio';
-import { lcmCalc, gcdCalc, euclideanRhythm, midiToFreq } from './utils';
+import { lcmCalc, gcdCalc, euclideanRhythm, midiToFreq, harmonicAmplitudes, spectralCentroid } from './utils';
 import { showHintFloat, closeEndlessMode } from './ui-render';
 import { stopAllPlayback } from './game-engine';
 import { registerActions } from './events';
@@ -274,10 +274,131 @@ function generateOctaveQuestion(round: number): EndlessQuestion {
   };
 }
 
+/* ===== FOURIER / HARMONICS QUESTIONS ===== */
+// Three interchangeable variants that exercise the math behind the Harmonics
+// Lab: harmonic frequencies, harmonic-set recognition, and spectral centroid.
+const WAVE_CN: Record<string, string> = {
+  sine: '正弦波',
+  square: '方波',
+  sawtooth: '锯齿波',
+  triangle: '三角波',
+};
+
+function generateHarmonicFreqQuestion(round: number): EndlessQuestion {
+  // Variant A: k-th harmonic frequency of a given fundamental.
+  const fundamental = [110, 220, 440][randomInt(0, 2)];
+  const k = randomInt(2, Math.min(8, 3 + Math.floor(round / 3)));
+  const target = fundamental * k;
+  return {
+    worldId: 3,
+    worldName: '傅里叶谐波',
+    text: `基频 ${fundamental}Hz 的第 ${k} 次谐波频率是多少 Hz？（整数谐波序列）`,
+    correctAnswer: target,
+    inputType: 'number',
+    hint: `谐波频率 = 基频 × 谐波序号，即 ${fundamental} × ${k} = ${target}`,
+    points: 4 + round,
+  };
+}
+
+function generateHarmonicSetQuestion(round: number): EndlessQuestion {
+  // Variant B: which harmonic set does a canonical waveform contain?
+  // Only square (odd) and sawtooth (all) — they have distinct harmonic SETS.
+  // (Triangle shares square's odd-only set, so it's reserved for the
+  //  amplitude-decay variant below to avoid ambiguous answers.)
+  const wave = (['square', 'sawtooth'] as const)[randomInt(0, 1)];
+  const correctDesc =
+    wave === 'square' ? '仅奇次谐波 (H1, H3, H5…)' : '全部谐波 (H1, H2, H3…)';
+  const allOptions = [
+    '仅奇次谐波 (H1, H3, H5…)',
+    '仅偶次谐波 (H2, H4, H6…)',
+    '全部谐波 (H1, H2, H3…)',
+    '仅基频 (H1)',
+  ];
+  // shuffle options
+  const options = allOptions.slice();
+  for (let i = options.length - 1; i > 0; i--) {
+    const j = randomInt(0, i);
+    [options[i], options[j]] = [options[j], options[i]];
+  }
+  return {
+    worldId: 3,
+    worldName: '傅里叶谐波',
+    text: `${WAVE_CN[wave]} 的傅里叶级数包含哪些谐波？`,
+    correctAnswer: correctDesc,
+    options,
+    inputType: 'choice',
+    hint:
+      wave === 'square'
+        ? '方波：仅奇次谐波，振幅按 1/k 衰减'
+        : '锯齿波：全部谐波，振幅按 1/k 衰减',
+    points: 5 + round,
+  };
+}
+
+function generateHarmonicDecayQuestion(round: number): EndlessQuestion {
+  // Variant B2: amplitude decay rule (distinguishes square 1/k from triangle 1/k²).
+  const wave = (['square', 'triangle'] as const)[randomInt(0, 1)];
+  const correctDesc = wave === 'square' ? '奇次谐波，1/k' : '奇次谐波，1/k²';
+  const allOptions = [
+    '奇次谐波，1/k',
+    '奇次谐波，1/k²',
+    '全部谐波，1/k',
+    '仅基频，1',
+  ];
+  const options = allOptions.slice();
+  for (let i = options.length - 1; i > 0; i--) {
+    const j = randomInt(0, i);
+    [options[i], options[j]] = [options[j], options[i]];
+  }
+  return {
+    worldId: 3,
+    worldName: '傅里叶谐波',
+    text: `${WAVE_CN[wave]} 谐波振幅按什么规律衰减？`,
+    correctAnswer: correctDesc,
+    options,
+    inputType: 'choice',
+    hint:
+      wave === 'square'
+        ? '方波：奇次谐波，振幅 1/k（收敛较慢）'
+        : '三角波：奇次谐波，振幅 1/k²（收敛更快，波形更圆滑）',
+    points: 6 + round,
+  };
+}
+
+function generateSpectralCentroidQuestion(round: number): EndlessQuestion {
+  // Variant C: compute the spectral centroid of a small harmonic vector.
+  const n = 4;
+  const wave = (['sine', 'square', 'sawtooth', 'triangle'] as const)[randomInt(0, 3)];
+  const amps = harmonicAmplitudes(wave, n);
+  const centroid = spectralCentroid(amps);
+  const answer = Math.round(centroid * 100) / 100;
+  return {
+    worldId: 3,
+    worldName: '傅里叶谐波',
+    text: `已知前 ${n} 次谐波振幅向量为 [${amps
+      .map((a) => a.toFixed(2))
+      .join(', ')}]（来自${WAVE_CN[wave]}），谱质心 = Σ(k·aₖ)/Σaₖ ≈ ？`,
+    correctAnswer: answer,
+    inputType: 'number',
+    hint: `谱质心 = 振幅加权平均谐波数，本题为 ${answer.toFixed(2)}（保留两位小数）`,
+    points: 6 + round,
+  };
+}
+
+function generateWaveLabQuestion(round: number): EndlessQuestion {
+  const variant = randomInt(0, 3);
+  if (variant === 0) return generateHarmonicFreqQuestion(round);
+  if (variant === 1) return generateHarmonicSetQuestion(round);
+  if (variant === 2) return generateHarmonicDecayQuestion(round);
+  return generateSpectralCentroidQuestion(round);
+}
+
 /* ===== MAIN GENERATOR ===== */
 export function generateQuestion(round: number): EndlessQuestion {
   if (round > 3 && Math.random() < 0.25) return generatePrimeQuestion(round);
   if (round > 5 && Math.random() < 0.25) return generateOctaveQuestion(round);
+  // Fourier / harmonics questions (Harmonics Lab math) kick in from round 4.
+  if (round > 3 && Math.random() < 0.25) return generateWaveLabQuestion(round);
   const worldId = pickRandomWorld();
   switch (worldId) {
     case 1:

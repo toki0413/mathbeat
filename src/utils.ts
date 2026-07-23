@@ -213,3 +213,98 @@ export function dailyHash(seed: string, mod: number): number {
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) % mod;
   return h;
 }
+
+/* ===== FOURIER / ADDITIVE SYNTHESIS =====
+ * Pure-math helpers for the Harmonics Lab. A periodic waveform can be written
+ * as a sum of sinusoids at integer multiples of a fundamental frequency
+ * (the Fourier series). The relative amplitudes of these harmonics are
+ * exactly what the ear perceives as timbre. */
+
+export type WaveformType = 'sine' | 'square' | 'sawtooth' | 'triangle';
+
+/** Amplitudes of the first `n` harmonics for a canonical waveform.
+ *  - sine:     only the fundamental
+ *  - square:   odd harmonics, amplitude 1/k
+ *  - sawtooth: all harmonics, amplitude 1/k
+ *  - triangle: odd harmonics, amplitude 1/k²  (faster convergence)
+ *  Returns a length-`n` array of non-negative amplitudes. */
+export function harmonicAmplitudes(wave: WaveformType, n: number): number[] {
+  const amps: number[] = new Array(n).fill(0);
+  for (let k = 1; k <= n; k++) {
+    if (wave === 'sine') {
+      amps[k - 1] = k === 1 ? 1 : 0;
+    } else if (wave === 'square') {
+      amps[k - 1] = k % 2 === 1 ? 1 / k : 0;
+    } else if (wave === 'sawtooth') {
+      amps[k - 1] = 1 / k;
+    } else {
+      // triangle: odd harmonics only, 1/k²
+      amps[k - 1] = k % 2 === 1 ? 1 / (k * k) : 0;
+    }
+  }
+  return amps;
+}
+
+/** Evaluate the Fourier series at phase `phase` (radians, one period = 2π):
+ *    f(φ) = Σ aₖ · sin(k·φ)
+ *  Pure function — used both for drawing the waveform and for audio rendering. */
+export function evaluateFourier(amps: number[], phase: number): number {
+  let sum = 0;
+  for (let k = 0; k < amps.length; k++) {
+    if (amps[k] !== 0) sum += amps[k] * Math.sin((k + 1) * phase);
+  }
+  return sum;
+}
+
+/** Spectral centroid (in harmonic-number units): the amplitude-weighted mean
+ *  harmonic number. A perceptual proxy for "brightness" — higher = more
+ *  high-frequency energy. Used by the Harmonics Lab to score the player's
+ *  patch and by endless-mode questions. */
+export function spectralCentroid(amps: number[]): number {
+  let num = 0;
+  let den = 0;
+  for (let k = 0; k < amps.length; k++) {
+    const a = Math.abs(amps[k]);
+    num += (k + 1) * a;
+    den += a;
+  }
+  return den === 0 ? 0 : num / den;
+}
+
+/** Classify a harmonic amplitude vector to the nearest canonical waveform by
+ *  comparing normalized shapes. Returns the best-matching waveform and a
+ *  0–1 similarity score (1 = exact match). Used by the "guess the waveform"
+ *  challenge and to validate answers. */
+export function classifyWaveform(
+  amps: number[]
+): { type: WaveformType; similarity: number } {
+  const types: WaveformType[] = ['sine', 'square', 'sawtooth', 'triangle'];
+  let best: WaveformType = 'sine';
+  let bestSim = -1;
+  for (const t of types) {
+    const ref = harmonicAmplitudes(t, amps.length);
+    const sim = cosineSimilarity(amps, ref);
+    if (sim > bestSim) {
+      bestSim = sim;
+      best = t;
+    }
+  }
+  return { type: best, similarity: bestSim };
+}
+
+/** Cosine similarity between two equal-length vectors (range 0–1 for
+ *  non-negative amplitude vectors). */
+export function cosineSimilarity(a: number[], b: number[]): number {
+  const n = Math.min(a.length, b.length);
+  let dot = 0;
+  let na = 0;
+  let nb = 0;
+  for (let i = 0; i < n; i++) {
+    dot += a[i] * b[i];
+    na += a[i] * a[i];
+    nb += b[i] * b[i];
+  }
+  if (na === 0 || nb === 0) return 0;
+  return dot / (Math.sqrt(na) * Math.sqrt(nb));
+}
+

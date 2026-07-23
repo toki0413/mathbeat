@@ -2,7 +2,7 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=480, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>数律 MathBeat</title>
     <link rel="manifest" href="manifest.json" />
     <style>
@@ -32,11 +32,42 @@
         --w8: #4ecdc4;
         --science: #9b59b6;
         --science2: #c39bd3;
+        /* Cross-platform responsive app shell. Adapts from mobile portrait
+           up to tablet/desktop while keeping a centered, phone-like column. */
+        --app-max-width: 480px;
+        --app-anim: 0.35s;
+      }
+      @media (min-width: 600px) {
+        :root {
+          --app-max-width: 520px;
+        }
+      }
+      @media (min-width: 1100px) {
+        :root {
+          --app-max-width: 560px;
+        }
+      }
+      /* Honor OS-level reduced-motion preference (WCAG 2.3.3). */
+      @media (prefers-reduced-motion: reduce) {
+        :root {
+          --app-anim: 0s;
+        }
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.001ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.001ms !important;
+          scroll-behavior: auto !important;
+        }
       }
       html,
       body {
-        width: 480px;
-        height: 900px;
+        width: 100%;
+        max-width: var(--app-max-width);
+        margin: 0 auto;
+        min-height: 100vh;
+        min-height: 100dvh;
         overflow-x: hidden;
         overflow-y: auto;
         background: var(--bg);
@@ -49,15 +80,41 @@
         -webkit-user-select: none;
         user-select: none;
       }
+      /* Educational text content must remain selectable for study/quoting. */
+      .edu-text,
+      .math-concept,
+      .concept-desc,
+      .why-body,
+      .tutorial-body,
+      .boss-problem-stmt,
+      .science-explain {
+        -webkit-user-select: text;
+        user-select: text;
+      }
       body {
         padding-bottom: 30px;
+      }
+      /* Keyboard focus indicator for accessibility (WCAG 2.4.7). */
+      :focus-visible {
+        outline: 3px solid #7c6bff;
+        outline-offset: 2px;
+      }
+      [data-action] {
+        cursor: pointer;
+      }
+      [data-action]:not(button):not(a):not(input):not(select):not(textarea) {
+        /* Non-native interactive elements become keyboard-reachable targets. */
       }
       #particleCanvas {
         position: fixed;
         top: 0;
         left: 0;
-        width: 480px;
-        height: 900px;
+        right: 0;
+        margin: 0 auto;
+        width: 100%;
+        max-width: var(--app-max-width);
+        height: 100vh;
+        height: 100dvh;
         pointer-events: none;
         z-index: 999;
       }
@@ -65,8 +122,12 @@
         position: fixed;
         top: 0;
         left: 0;
-        width: 480px;
-        height: 900px;
+        right: 0;
+        margin: 0 auto;
+        width: 100%;
+        max-width: var(--app-max-width);
+        height: 100vh;
+        height: 100dvh;
         z-index: 2000;
         background: linear-gradient(135deg, #fff0e0, #ffe4d4, #ffd6c8);
         display: flex;
@@ -1200,8 +1261,12 @@
         position: fixed;
         top: 0;
         left: 0;
-        width: 480px;
-        height: 900px;
+        right: 0;
+        margin: 0 auto;
+        width: 100%;
+        max-width: var(--app-max-width);
+        height: 100vh;
+        height: 100dvh;
         background: var(--bg);
         z-index: 90;
         display: none;
@@ -1305,6 +1370,34 @@
       .scalelab-row.cultural .scalelab-name { color: var(--accent2); font-weight: 600; }
       .scalelab-hp-bar { display: inline-block; height: 8px; background: var(--accent); border-radius: 2px; vertical-align: middle; margin-right: 4px; }
       .scalelab-cell.playing { background: var(--accent); color: #fff; }
+      /* Wave Lab (Fourier / additive synthesis) */
+      .wavelab-canvas-wrap { background: var(--bg2); border-radius: 8px; padding: 8px; margin-bottom: 12px; }
+      .wavelab-canvas-wrap canvas { width: 100%; height: auto; display: block; border-radius: 6px; background: #fff; }
+      .wavelab-presets { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+      .wavelab-preset-btn { flex: 1; min-width: 64px; padding: 8px 6px; font-size: 13px; font-weight: 700; background: var(--accent); color: #fff; border: none; border-radius: 8px; cursor: pointer; transition: transform 0.15s, filter 0.15s; }
+      .wavelab-preset-btn:active { transform: scale(0.96); }
+      .wavelab-preset-btn:hover { filter: brightness(1.1); }
+      .wavelab-harmonics { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+      .wavelab-harm-row { display: grid; grid-template-columns: 64px 1fr 36px; gap: 8px; align-items: center; font-size: 12px; }
+      .wavelab-harm-label { font-weight: 700; color: var(--ink); }
+      .wavelab-harm-freq { font-size: 10px; color: var(--muted); font-weight: 400; }
+      .wavelab-slider { width: 100%; accent-color: var(--accent2); }
+      .wavelab-harm-val { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 11px; }
+      .wavelab-controls { display: flex; gap: 8px; margin-bottom: 12px; }
+      .wavelab-controls .ctrl-btn { flex: 1; }
+      .wavelab-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+      .wavelab-stat { background: var(--bg2); border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+      .wavelab-stat span { font-size: 11px; color: var(--muted); }
+      .wavelab-stat strong { font-size: 14px; color: var(--accent); }
+      .wavelab-stat.wavelab-target { background: rgba(255,140,66,0.12); }
+      .wavelab-stat.wavelab-target strong { color: var(--accent2); }
+      .wavelab-info { background: var(--bg2); border-radius: 8px; padding: 10px 12px; font-size: 12px; line-height: 1.6; color: var(--muted); }
+      .wavelab-formula { font-family: monospace; font-size: 13px; color: var(--accent); margin-bottom: 4px; word-break: break-word; }
+      .wavelab-desc strong { color: var(--ink); }
+      .wavelab-challenge-box { background: rgba(255,140,66,0.12); border: 1px solid var(--accent2); border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+      .wavelab-challenge-box.wavelab-success { background: rgba(46,204,113,0.15); border-color: #2ecc71; }
+      .wavelab-challenge-box.wavelab-fail { background: rgba(231,76,60,0.12); border-color: #e74c3c; }
+      .wavelab-verify-btn { padding: 6px 14px; font-size: 13px; font-weight: 700; background: var(--accent); color: #fff; border: none; border-radius: 6px; cursor: pointer; }
       /* Protein */
       .protein-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
       .protein-desc { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
@@ -1698,8 +1791,12 @@
         position: fixed;
         top: 0;
         left: 0;
-        width: 480px;
-        height: 900px;
+        right: 0;
+        margin: 0 auto;
+        width: 100%;
+        max-width: var(--app-max-width);
+        height: 100vh;
+        height: 100dvh;
         background: var(--bg);
         z-index: 100;
         display: none;
@@ -1792,8 +1889,12 @@
         position: fixed;
         top: 0;
         left: 0;
-        width: 480px;
-        height: 900px;
+        right: 0;
+        margin: 0 auto;
+        width: 100%;
+        max-width: var(--app-max-width);
+        height: 100vh;
+        height: 100dvh;
         background: rgba(0, 0, 0, 0.5);
         z-index: 150;
         display: none;
@@ -2177,8 +2278,12 @@
         position: fixed;
         top: 0;
         left: 0;
-        width: 480px;
-        height: 900px;
+        right: 0;
+        margin: 0 auto;
+        width: 100%;
+        max-width: var(--app-max-width);
+        height: 100vh;
+        height: 100dvh;
         background: var(--bg);
         z-index: 80;
         display: none;
@@ -2553,6 +2658,11 @@
                 <div class="science-mode-name">蜘蛛网声化</div>
                 <div class="science-mode-sub">图结构→乐器</div>
               </div>
+              <div class="science-mode-card" onclick="openWaveLab()">
+                <div class="science-mode-emoji">〰️</div>
+                <div class="science-mode-name">谐波实验室</div>
+                <div class="science-mode-sub">傅里叶级数·加法合成</div>
+              </div>
               <div class="science-mode-card" onclick="selectScienceType('crystal')">
                 <div class="science-mode-emoji">💎</div>
                 <div class="science-mode-name">晶体点阵</div>
@@ -2873,8 +2983,12 @@
         position: fixed;
         top: 0;
         left: 0;
-        width: 480px;
-        height: 900px;
+        right: 0;
+        margin: 0 auto;
+        width: 100%;
+        max-width: var(--app-max-width);
+        height: 100vh;
+        height: 100dvh;
         background: rgba(0, 0, 0, 0.5);
         z-index: 1450;
         display: none;
@@ -2910,8 +3024,12 @@
         position: fixed;
         top: 0;
         left: 0;
-        width: 480px;
-        height: 900px;
+        right: 0;
+        margin: 0 auto;
+        width: 100%;
+        max-width: var(--app-max-width);
+        height: 100vh;
+        height: 100dvh;
         background: rgba(0, 0, 0, 0.5);
         z-index: 1500;
         display: none;
@@ -3094,6 +3212,23 @@
           温度映射为音高，闪烁频率映射为BPM，涡量映射为装饰音密度——火焰不仅是物理现象，
           更是生成算法，是物质与音乐共享振动语法的活体实例。
         </div>
+      </div>
+    </div>
+
+    <!-- Harmonics Lab (Fourier / additive synthesis) Screen -->
+    <div id="waveLabScreen" class="screen">
+      <div class="ach-header">
+        <span class="back-btn" data-action="closeWaveLab">←</span>
+        <div style="font-size:18px;font-weight:800">〰️ 谐波实验室</div>
+        <span></span>
+      </div>
+      <div style="padding:12px;overflow-y:auto;max-height:calc(100dvh - 60px)">
+        <div style="background:var(--bg2);border-radius:8px;padding:10px;font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:12px" class="edu-text">
+          <strong style="color:var(--ink)">傅里叶级数</strong>：任意周期波形都可分解为正弦谐波之和
+          <code>f(φ) = Σ aₖ·sin(k·φ)</code>。调节下方 8 个谐波振幅，观察合成波形与音色变化，
+          再用"猜波形"挑战检验你对谐波结构的理解。
+        </div>
+        <div id="waveLabPanel"></div>
       </div>
     </div>
 

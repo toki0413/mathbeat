@@ -989,6 +989,119 @@
         margin: 0 2px 0 8px;
         vertical-align: middle;
       }
+      .weekend-xp-banner {
+        margin: 0 16px 8px;
+        padding: 8px 14px;
+        background: linear-gradient(135deg, #ffb347, #ff8c42);
+        border-radius: var(--radius);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 800;
+        color: #fff;
+        box-shadow: 0 3px 12px rgba(255, 140, 66, 0.3);
+        animation: weekendPulse 2s ease-in-out infinite;
+      }
+      @keyframes weekendPulse {
+        0%, 100% { box-shadow: 0 3px 12px rgba(255, 140, 66, 0.3); }
+        50% { box-shadow: 0 3px 18px rgba(255, 140, 66, 0.5); }
+      }
+      .weekend-xp-icon {
+        font-size: 16px;
+      }
+      .daily-rec-card {
+        margin: 0 16px 12px;
+        background: var(--card);
+        border-radius: var(--radius);
+        padding: 12px 14px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+      }
+      .rec-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+      .rec-title {
+        font-size: 15px;
+        font-weight: 800;
+        color: var(--text);
+      }
+      .rec-sub {
+        font-size: 11px;
+        color: var(--dim);
+      }
+      .rec-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+      .rec-card {
+        background: linear-gradient(135deg, rgba(124, 107, 255, 0.08), rgba(78, 205, 196, 0.08));
+        border: 1px solid rgba(124, 107, 255, 0.2);
+        border-radius: 12px;
+        padding: 10px 8px;
+        cursor: pointer;
+        text-align: left;
+        font-family: inherit;
+        transition: transform 0.15s, box-shadow 0.15s;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .rec-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 14px rgba(124, 107, 255, 0.18);
+      }
+      .rec-card:active {
+        transform: scale(0.97);
+      }
+      .rec-card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .rec-emoji {
+        font-size: 18px;
+      }
+      .rec-rank {
+        font-size: 10px;
+        font-weight: 800;
+        color: #7c6bff;
+        background: rgba(124, 107, 255, 0.12);
+        padding: 1px 6px;
+        border-radius: 8px;
+      }
+      .rec-level-name {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text);
+        line-height: 1.2;
+      }
+      .rec-world-name {
+        font-size: 10px;
+        color: var(--dim);
+      }
+      .rec-stars {
+        font-size: 11px;
+        line-height: 1;
+      }
+      .rec-star-empty {
+        color: rgba(0, 0, 0, 0.18);
+      }
+      .rec-reason {
+        font-size: 10px;
+        color: #ff8c42;
+        font-weight: 600;
+        margin-top: 2px;
+        line-height: 1.2;
+      }
+      @media (max-width: 360px) {
+        .rec-grid {
+          grid-template-columns: 1fr;
+        }
+      }
       .daily-challenge {
         margin: 0 16px 12px;
         background: linear-gradient(135deg, var(--trackA), var(--trackB));
@@ -2845,6 +2958,76 @@
         opacity: 1;
         transform: translateX(-50%) translateY(0);
       }
+      /* 成就解锁彩蛋动画：按稀有度差异化 */
+      #achievementPopup.rarity-common {
+        background: var(--card);
+      }
+      #achievementPopup.rarity-rare {
+        background: linear-gradient(135deg, #ffffff, #e8f4ff);
+        border: 2px solid #4ecdc4;
+        box-shadow: 0 4px 24px rgba(78, 205, 196, 0.35);
+        animation: achPopRare 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      #achievementPopup.rarity-rare .ach-icon {
+        animation: achIconPulse 1.5s ease-in-out infinite;
+      }
+      #achievementPopup.rarity-epic {
+        background: linear-gradient(135deg, #ffffff, #f0eaff);
+        border: 2px solid #7c6bff;
+        box-shadow: 0 4px 28px rgba(124, 107, 255, 0.45), 0 0 0 4px rgba(124, 107, 255, 0.12);
+        animation: achPopEpic 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      #achievementPopup.rarity-epic .ach-icon {
+        animation: achIconSpin 1.2s ease-in-out infinite;
+      }
+      #achievementPopup.rarity-legendary {
+        background: linear-gradient(135deg, #fffbe6, #ffe9b8);
+        border: 2px solid #ffb347;
+        box-shadow: 0 4px 32px rgba(255, 179, 71, 0.55), 0 0 0 6px rgba(255, 179, 71, 0.15), 0 0 60px rgba(255, 140, 66, 0.3);
+        animation: achPopLegendary 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), achLegendaryGlow 1.4s ease-in-out infinite 0.6s;
+      }
+      #achievementPopup.rarity-legendary .ach-icon {
+        animation: achIconBounce 0.9s ease-in-out infinite;
+        text-shadow: 0 0 12px rgba(255, 140, 66, 0.8);
+      }
+      #achievementPopup.rarity-legendary .ach-name {
+        color: #b8740a;
+        text-shadow: 0 0 8px rgba(255, 179, 71, 0.4);
+      }
+      @keyframes achPopRare {
+        0% { transform: translateX(-50%) translateY(-20px) scale(0.7); opacity: 0; }
+        60% { transform: translateX(-50%) translateY(0) scale(1.08); opacity: 1; }
+        100% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
+      }
+      @keyframes achPopEpic {
+        0% { transform: translateX(-50%) translateY(-30px) scale(0.5) rotate(-8deg); opacity: 0; }
+        50% { transform: translateX(-50%) translateY(0) scale(1.12) rotate(4deg); opacity: 1; }
+        75% { transform: translateX(-50%) translateY(0) scale(0.96) rotate(-2deg); }
+        100% { transform: translateX(-50%) translateY(0) scale(1) rotate(0); opacity: 1; }
+      }
+      @keyframes achPopLegendary {
+        0% { transform: translateX(-50%) translateY(-40px) scale(0.3) rotate(-180deg); opacity: 0; }
+        50% { transform: translateX(-50%) translateY(0) scale(1.2) rotate(10deg); opacity: 1; }
+        70% { transform: translateX(-50%) translateY(0) scale(0.92) rotate(-5deg); }
+        85% { transform: translateX(-50%) translateY(0) scale(1.04) rotate(2deg); }
+        100% { transform: translateX(-50%) translateY(0) scale(1) rotate(0); opacity: 1; }
+      }
+      @keyframes achLegendaryGlow {
+        0%, 100% { box-shadow: 0 4px 32px rgba(255, 179, 71, 0.55), 0 0 0 6px rgba(255, 179, 71, 0.15), 0 0 60px rgba(255, 140, 66, 0.3); }
+        50% { box-shadow: 0 4px 40px rgba(255, 179, 71, 0.75), 0 0 0 10px rgba(255, 179, 71, 0.2), 0 0 80px rgba(255, 140, 66, 0.5); }
+      }
+      @keyframes achIconPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.15); }
+      }
+      @keyframes achIconSpin {
+        0%, 100% { transform: rotate(0) scale(1); }
+        50% { transform: rotate(180deg) scale(1.2); }
+      }
+      @keyframes achIconBounce {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-6px) scale(1.25); }
+      }
       .ach-icon {
         font-size: 28px;
       }
@@ -3344,6 +3527,10 @@
         </div>
         <div class="daily-status">进入</div>
       </div>
+      <div id="weekendXpBanner" class="weekend-xp-banner" style="display:none">
+        <span class="weekend-xp-icon">⚡</span>
+        <span class="weekend-xp-text">周末双倍 XP 活动进行中！所有得分 ×2</span>
+      </div>
       <div id="dailyChallengeBanner" class="daily-challenge" onclick="startDailyChallenge()">
         <div class="daily-left">
           <div class="daily-icon">📅</div>
@@ -3371,6 +3558,7 @@
       <button class="home-insights-btn" data-action="openLearningInsights" aria-label="学习洞察">
         📊 学习洞察：错题本 · 薄弱点 · 学习曲线
       </button>
+      <div id="dailyRecommendations" class="daily-rec-card" style="display:none"></div>
       <div id="continueBar" style="display: none"></div>
       <div id="worldGrid">
         <div id="worldGridSkeleton" style="display: flex; flex-wrap: wrap; gap: 10px; padding: 4px 0">

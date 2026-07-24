@@ -101,6 +101,134 @@ export function identifyWeakPoints(): WeakPoint[] {
 }
 
 /* ============================================================
+ * 2.5 今日推荐 3 题（基于薄弱点 + 错题历史）
+ * ============================================================ */
+
+export interface RecommendedLevel {
+  levelId: string;
+  worldId: number;
+  worldName: string;
+  worldEmoji: string;
+  levelName: string;
+  levelDesc: string;
+  /** 当前星级（0-3，0 表示未通关）。 */
+  stars: number;
+  /** 推荐理由。 */
+  reason: string;
+  /** 推荐强度（0-100，越高越优先）。 */
+  priority: number;
+}
+
+/**
+ * 基于薄弱点 + 错题历史生成今日推荐 3 题。
+ * 策略：
+ *  1. 优先推荐错题数最多的世界中的低星关卡（重练）
+ *  2. 其次推荐未通关的关卡（推动进度）
+ *  3. 不足 3 题时用下一关（推进）补齐
+ *  返回的关卡已解锁（前置 boss 已通过）
+ */
+export function generateDailyRecommendations(): RecommendedLevel[] {
+  const weakPoints = identifyWeakPoints();
+  const progress = Store.state.progress || {};
+  const recommendations: RecommendedLevel[] = [];
+  const seen = new Set<string>();
+
+  // 工具：检查关卡是否已解锁
+  const isUnlocked = (wid: number, lid: string): boolean => {
+    if (wid === 1) return true;
+    const bossId = wid - 1 + '-B';
+    return (progress[bossId] || 0) >= 1;
+  };
+
+  // 第一轮：从薄弱世界中挑选低星关卡
+  for (const wp of weakPoints) {
+    if (recommendations.length >= 3) break;
+    for (const lv of wp.lowStarLevels) {
+      if (recommendations.length >= 3) break;
+      if (seen.has(lv.id)) continue;
+      if (!isUnlocked(wp.worldId, lv.id)) continue;
+      const w = WORLDS.find((x) => x.id === wp.worldId);
+      const level = (LEVELS[wp.worldId] || []).find((l) => l.id === lv.id);
+      if (!w || !level) continue;
+      seen.add(lv.id);
+      recommendations.push({
+        levelId: lv.id,
+        worldId: wp.worldId,
+        worldName: wp.worldName,
+        worldEmoji: wp.worldEmoji,
+        levelName: level.name,
+        levelDesc: level.desc,
+        stars: lv.stars,
+        reason: lv.stars === 0 ? '尚未通关，推荐挑战' : '当前低星，建议重练提升',
+        priority: 80 - recommendations.length * 10,
+      });
+    }
+  }
+
+  // 第二轮：找未通关的关卡（推动进度）
+  if (recommendations.length < 3) {
+    for (let wid = 1; wid <= 8 && recommendations.length < 3; wid++) {
+      const levels = LEVELS[wid] || [];
+      for (const level of levels) {
+        if (recommendations.length >= 3) break;
+        if (seen.has(level.id)) continue;
+        if (!isUnlocked(wid, level.id)) continue;
+        const s = progress[level.id] || 0;
+        if (s === 0) {
+          // 找到第一个未通关关卡
+          seen.add(level.id);
+          const w = WORLDS.find((x) => x.id === wid);
+          if (!w) continue;
+          recommendations.push({
+            levelId: level.id,
+            worldId: wid,
+            worldName: w.name,
+            worldEmoji: w.emoji,
+            levelName: level.name,
+            levelDesc: level.desc,
+            stars: 0,
+            reason: '推进进度，开启新内容',
+            priority: 50,
+          });
+          break; // 每个世界只推一个未通关关卡
+        }
+      }
+    }
+  }
+
+  // 第三轮：用已通关但未满星的关卡补齐（追求三星）
+  if (recommendations.length < 3) {
+    for (let wid = 1; wid <= 8 && recommendations.length < 3; wid++) {
+      const levels = LEVELS[wid] || [];
+      for (const level of levels) {
+        if (recommendations.length >= 3) break;
+        if (seen.has(level.id)) continue;
+        if (!isUnlocked(wid, level.id)) continue;
+        const s = progress[level.id] || 0;
+        if (s > 0 && s < 3) {
+          seen.add(level.id);
+          const w = WORLDS.find((x) => x.id === wid);
+          if (!w) continue;
+          recommendations.push({
+            levelId: level.id,
+            worldId: wid,
+            worldName: w.name,
+            worldEmoji: w.emoji,
+            levelName: level.name,
+            levelDesc: level.desc,
+            stars: s,
+            reason: '冲击三星，巩固掌握',
+            priority: 30,
+          });
+        }
+      }
+    }
+  }
+
+  return recommendations.slice(0, 3);
+}
+
+/* ============================================================
  * 3. 学习曲线趋势图
  * ============================================================ */
 
@@ -419,5 +547,6 @@ if (typeof window !== 'undefined') {
     recordWrongAnswer,
     identifyWeakPoints,
     drawLearningCurve,
+    generateDailyRecommendations,
   });
 }

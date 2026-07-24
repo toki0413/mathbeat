@@ -537,6 +537,32 @@ export function openPracticeFromWorld6(k: number, n: number, bpm: number): void 
   });
 }
 
+/**
+ * 基于世界7 的概率骰子节奏启动练习模式。
+ * n 步序列，每步以 prob 概率触发，用户可对照练习。
+ */
+export function openPracticeFromWorld7(prob: number, n: number, bpm: number): void {
+  // 生成一条概率节奏样本（seed 固定以便练习可重复）
+  const steps: boolean[] = [];
+  let seed = 12345;
+  for (let i = 0; i < n; i++) {
+    // 简单 LCG 伪随机，保证可复现
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    const r = (seed / 0x7fffffff) * 100;
+    steps.push(r < prob);
+  }
+  openPracticeMode({
+    tracks: [
+      { name: `概率 ${prob}% 节奏`, steps, sound: 'kick', vol: 0.5 },
+      { name: '节拍参考', steps: new Array(n).fill(true), sound: 'snare', vol: 0.15 },
+    ],
+    totalSteps: n,
+    baseBpm: bpm,
+    stepsPerBeat: 1,
+    title: `练习 概率 ${prob}% × ${n} 步`,
+  });
+}
+
 /** 本地实现的欧几里得节奏（避免与 utils 循环依赖，逻辑等价）。 */
 function euclideanRhythmLocal(k: number, n: number): number[] {
   if (n <= 0) return [];
@@ -577,6 +603,7 @@ if (typeof window !== 'undefined') {
     openPracticeFromWorld1,
     openPracticeFromWorld4,
     openPracticeFromWorld6,
+    openPracticeFromWorld7,
     closePracticeMode,
     togglePracticePlay,
     stopPractice,

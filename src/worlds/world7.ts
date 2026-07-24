@@ -13,6 +13,7 @@ import {
 import type { Transport, TransportEvent } from '../core/transport';
 import { showStars, showEducationCard, showHintFloat } from '../ui-render';
 import { registerActions, registerInputs } from '../events';
+import { openPracticeFromWorld7 } from '../practice-mode';
 
 /* ===== WORLD 7: PROBABILITY & RANDOMNESS ===== */
 export function renderWorld7(container: HTMLElement, lid: string) {
@@ -40,7 +41,7 @@ export function renderW7Dice(container: HTMLElement, initialProb: number) {
     prob +
     '</span>%</label><input type="range" id="w7Prob" min="10" max="90" value="' +
     prob +
-    '" style="width:100%;margin:6px 0" data-input="w7ProbChange"></div><div class="controls-bar"><button class="ctrl-btn" data-action="w7RollDice">🎲 掷骰子</button><button class="ctrl-btn play-btn" id="w7PlayBtn" data-action="w7TogglePlay">▶</button><button class="verify-btn" data-action="w7Verify">验证</button></div><div id="w7Grid" style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin:12px 0"></div><div class="result-msg" id="w7Result"></div><div class="stars-row" id="w7Stars"></div><button class="next-btn" id="w7Next" data-action="nextLevel">下一关 →</button></div>';
+    '" style="width:100%;margin:6px 0" data-input="w7ProbChange"></div><div class="controls-bar"><button class="ctrl-btn" data-action="w7RollDice">🎲 掷骰子</button><button class="ctrl-btn play-btn" id="w7PlayBtn" data-action="w7TogglePlay">▶</button><button class="verify-btn" data-action="w7Verify">验证</button></div><div class="practice-entry" style="margin-top:8px;text-align:center"><button class="ctrl-btn" data-action="w7OpenPractice" style="background:linear-gradient(135deg,#7c6bff,#a78bfa);color:#fff;font-size:13px">🎯 进入分段练习</button></div><div id="w7Grid" style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin:12px 0"></div><div class="result-msg" id="w7Result"></div><div class="stars-row" id="w7Stars"></div><button class="next-btn" id="w7Next" data-action="nextLevel">下一关 →</button></div>';
   w7RollDice();
   w7RenderGrid();
   showHintFloat('拖动概率，点击“掷骰子”生成随机节奏。');

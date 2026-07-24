@@ -84,6 +84,29 @@ export function xpForAchievement(rarity: AchievementRarity | undefined): number 
 }
 
 /* ============================================================
+ * 2.5 周末双倍 XP 活动（对标成熟产品限时活动）
+ * ============================================================ */
+
+/** 周末双倍 XP 倍率。 */
+export const WEEKEND_XP_MULTIPLIER = 2;
+
+/** 判断当前是否为周末（周六/周日，按本地时区）。 */
+export function isWeekend(): boolean {
+  const day = new Date().getDay();
+  return day === 0 || day === 6; // 0=周日, 6=周六
+}
+
+/** 获取当前 XP 倍率（1 或 2）。 */
+export function getXpMultiplier(): number {
+  return isWeekend() ? WEEKEND_XP_MULTIPLIER : 1;
+}
+
+/** 应用倍率计算实际 XP。 */
+export function applyXpMultiplier(amount: number): number {
+  return Math.floor(amount * getXpMultiplier());
+}
+
+/* ============================================================
  * 3. addXp 核心：累积 XP + 检测升级 + 触发动画
  * ============================================================ */
 
@@ -97,7 +120,10 @@ export function addXp(amount: number, reason?: string): boolean {
   if (!Number.isFinite(amount) || amount <= 0) return false;
   const oldXp = Store.state.xp || 0;
   const oldLevel = Store.state.level || 1;
-  const newXp = oldXp + Math.floor(amount);
+  // 周末双倍 XP 加成
+  const multiplier = getXpMultiplier();
+  const actualAmount = Math.floor(amount) * multiplier;
+  const newXp = oldXp + actualAmount;
   const newLevel = levelFromXp(newXp);
 
   Store.state.xp = newXp;

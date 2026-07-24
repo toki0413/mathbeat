@@ -17,7 +17,7 @@ import { MATH_VISUALS } from './math-visuals';
 import { renderConceptMap, CONCEPT_NODES, getConceptConnections } from './concept-map';
 import { getBossProblem } from './boss-problems';
 import { state, isFreeModeUnlocked, stopAllPlayback, startLevel } from './game-engine';
-import { refreshXpBar, refreshFreezeBadge, renderStreakCalendar, refreshLearningGoalRing } from './progression';
+import { refreshXpBar, refreshFreezeBadge, renderStreakCalendar, refreshLearningGoalRing, isWeekend } from './progression';
 import {
   bgMusicUserMuted,
   bgMusicPlaying,
@@ -38,6 +38,7 @@ import { renderEditor } from './level-editor';
 import { initEndlessMode, endEndlessMode } from './endless-mode';
 import { registerActions } from './events';
 import { toggleSamplePlayback, importSampleToComposer } from './sample-library';
+import { generateDailyRecommendations } from './learning-insights';
 
 export function showScreen(name: string) {
   playMenuSwipe();
@@ -165,8 +166,17 @@ export function renderHome() {
     refreshFreezeBadge();
     renderStreakCalendar();
     refreshLearningGoalRing();
+    // 周末双倍 XP 横幅
+    const banner = document.getElementById('weekendXpBanner');
+    if (banner) banner.style.display = isWeekend() ? 'flex' : 'none';
   } catch (e) {
     /* progression 未就绪不影响渲染 */
+  }
+  // 今日推荐 3 题（基于薄弱点）
+  try {
+    renderDailyRecommendations();
+  } catch (e) {
+    /* 推荐渲染失败不影响首页 */
   }
   const freeCard = document.getElementById('freeModeCard')!;
   const freeLock = document.getElementById('freeModeLock')!;
@@ -191,6 +201,63 @@ export function renderHome() {
     document.body.appendChild(mascotEl);
   }
   applyTranslations();
+}
+
+/* ============================================================
+ * 今日推荐 3 题：基于薄弱点生成个性化推荐关卡入口
+ * ============================================================ */
+
+/** 渲染今日推荐卡片到 #dailyRecommendations（首页）。 */
+export function renderDailyRecommendations(): void {
+  if (typeof document === 'undefined') return;
+  const container = document.getElementById('dailyRecommendations');
+  if (!container) return;
+  const recs = generateDailyRecommendations();
+  if (recs.length === 0) {
+    container.style.display = 'none';
+    container.innerHTML = '';
+    return;
+  }
+  container.style.display = '';
+  container.innerHTML =
+    '<div class="rec-header"><span class="rec-title">🎯 今日推荐 3 题</span><span class="rec-sub">基于你的薄弱点</span></div>' +
+    '<div class="rec-grid">' +
+    recs
+      .map((r, i) => {
+        const starsDisplay =
+          r.stars > 0 ? '⭐'.repeat(r.stars) + '<span class="rec-star-empty">' + '☆'.repeat(3 - r.stars) + '</span>' : '<span class="rec-star-empty">☆☆☆</span>';
+        return (
+          '<button class="rec-card" data-action="startLevel" data-args=\'[' +
+          r.worldId +
+          ',"' +
+          r.levelId +
+          '"]\' aria-label="推荐关卡 ' +
+          (i + 1) +
+          '">' +
+          '<div class="rec-card-top"><span class="rec-emoji">' +
+          r.worldEmoji +
+          '</span><span class="rec-rank">#' +
+          (i + 1) +
+          '</span></div>' +
+          '<div class="rec-level-name">' +
+          escapeHtml(r.levelName) +
+          '</div>' +
+          '<div class="rec-world-name">' +
+          escapeHtml(r.worldName) +
+          ' · ' +
+          r.levelId +
+          '</div>' +
+          '<div class="rec-stars">' +
+          starsDisplay +
+          '</div>' +
+          '<div class="rec-reason">' +
+          escapeHtml(r.reason) +
+          '</div>' +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>';
 }
 
 export function isWorldUnlocked(wid: number) {
@@ -526,12 +593,34 @@ function achievementDesc(ach: (typeof ACHIEVEMENTS)[0]) {
 export function showAchievementPopup(id: string) {
   const ach = ACHIEVEMENTS.find((a) => a.id === id);
   if (!ach) return;
+  const rarity = ach.rarity || 'common';
   document.getElementById('achPopupIcon')!.textContent = ach.icon;
   document.getElementById('achPopupName')!.textContent = achievementName(ach);
   document.getElementById('achPopupDesc')!.textContent = achievementDesc(ach);
   const popup = document.getElementById('achievementPopup')!;
+  // 清除旧稀有度 class，添加新稀有度 class
+  popup.classList.remove('rarity-common', 'rarity-rare', 'rarity-epic', 'rarity-legendary');
+  popup.classList.add('rarity-' + rarity);
   popup.classList.add('show');
-  setTimeout(() => popup.classList.remove('show'), 3000);
+  // 显示时长按稀有度递增：common 3s / rare 4s / epic 5s / legendary 6s
+  const duration = rarity === 'legendary' ? 6000 : rarity === 'epic' ? 5000 : rarity === 'rare' ? 4000 : 3000;
+  // epic / legendary 触发额外撒花粒子增强彩蛋感
+  if (rarity === 'epic' || rarity === 'legendary') {
+    try {
+      (window as any).spawnConfetti();
+      if (rarity === 'legendary') {
+        // 传说级连撒两次 + 延迟再撒一次，制造"爆炸"效果
+        setTimeout(() => (window as any).spawnConfetti && (window as any).spawnConfetti(), 250);
+        setTimeout(() => (window as any).spawnConfetti && (window as any).spawnConfetti(), 600);
+      }
+    } catch (e) {
+      /* 粒子失败不影响主流程 */
+    }
+  }
+  setTimeout(() => {
+    popup.classList.remove('show');
+    popup.classList.remove('rarity-common', 'rarity-rare', 'rarity-epic', 'rarity-legendary');
+  }, duration);
 }
 
 export function showStars(id: string, stars: number) {

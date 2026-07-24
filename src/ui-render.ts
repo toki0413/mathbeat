@@ -17,7 +17,7 @@ import { MATH_VISUALS } from './math-visuals';
 import { renderConceptMap, CONCEPT_NODES, getConceptConnections } from './concept-map';
 import { getBossProblem } from './boss-problems';
 import { state, isFreeModeUnlocked, stopAllPlayback, startLevel } from './game-engine';
-import { refreshXpBar, refreshFreezeBadge } from './progression';
+import { refreshXpBar, refreshFreezeBadge, renderStreakCalendar, refreshLearningGoalRing } from './progression';
 import {
   bgMusicUserMuted,
   bgMusicPlaying,
@@ -163,6 +163,8 @@ export function renderHome() {
   try {
     refreshXpBar();
     refreshFreezeBadge();
+    renderStreakCalendar();
+    refreshLearningGoalRing();
   } catch (e) {
     /* progression 未就绪不影响渲染 */
   }

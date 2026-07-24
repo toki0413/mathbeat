@@ -5,7 +5,7 @@ import { lcmCalc, gcdCalc, euclideanRhythm, midiToFreq, harmonicAmplitudes, spec
 import { showHintFloat, closeEndlessMode } from './ui-render';
 import { stopAllPlayback } from './game-engine';
 import { registerActions } from './events';
-import { addXp, XP_REWARDS } from './progression';
+import { addXp, XP_REWARDS, recordLearningProgress } from './progression';
 
 export interface EndlessQuestion {
   worldId: number;
@@ -547,6 +547,11 @@ export function submitAnswer(e: Event | string | number, ...args: unknown[]): vo
     endlessState.score += points;
     playCorrect();
     addMelodyNote(true);
+    try {
+      recordLearningProgress(1);
+    } catch (e) {
+      /* ignore */
+    }
     showHintFloat(`✅ +${points} 分！连击 x${endlessState.combo}`);
   } else {
     endlessState.combo = 0;

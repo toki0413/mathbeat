@@ -15,7 +15,7 @@ import { w5DegreeName } from './worlds/world5';
 import { renderHome, showWhy } from './ui-render';
 import { SCIENCE_SAMPLES } from './science';
 import { registerActions, registerInputs } from './events';
-import { addXp, XP_REWARDS, tryAwardStreakFreeze, consumeStreakFreeze } from './progression';
+import { addXp, XP_REWARDS, tryAwardStreakFreeze, consumeStreakFreeze, recordLearningProgress } from './progression';
 
 export function getDailyChallenge() {
   const seed = getDailySeed();
@@ -639,6 +639,7 @@ export function dailyChallengeSuccess() {
     try {
       addXp(XP_REWARDS.dailyComplete, '每日挑战');
       tryAwardStreakFreeze();
+      recordLearningProgress(1);
     } catch (e) {
       /* progression 失败不影响主流程 */
     }

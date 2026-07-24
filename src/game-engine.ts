@@ -25,7 +25,7 @@ import { renderWorld5, w5StopPlayback } from './worlds/world5';
 import { renderWorld6, w6Stop } from './worlds/world6';
 import { renderWorld7, w7Stop } from './worlds/world7';
 import { renderWorld8, w8Stop } from './worlds/world8';
-import { addXp, xpForAchievement, XP_REWARDS } from './progression';
+import { addXp, xpForAchievement, XP_REWARDS, recordLearningProgress } from './progression';
 
 /* ===== GAME STATE =====
  * Runtime state backed by Store.state for persisted keys.
@@ -431,6 +431,8 @@ export function completeLevel(wid: number, lid: string, stars: number): void {
     const xpReward =
       (XP_REWARDS.levelStar[stars as 1 | 2 | 3] || 0) + (isFirstClear ? XP_REWARDS.firstClearBonus : 0);
     if (xpReward > 0) addXp(xpReward, '通关 ' + lid);
+    // 记录学习目标进度（首次通关计 1，重复通关也计以激励练习）
+    recordLearningProgress(1);
   } catch (e) {
     /* progression 失败不影响主流程 */
   }

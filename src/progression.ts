@@ -321,6 +321,10 @@ function createLevelModalElement(): HTMLElement {
 registerActions({
   showLevelModal,
   closeLevelModal,
+  renderStreakCalendar,
+  openLearningGoalModal,
+  closeLearningGoalModal,
+  setLearningDailyTarget,
 });
 
 if (typeof window !== 'undefined') {
@@ -329,5 +333,312 @@ if (typeof window !== 'undefined') {
     closeLevelModal,
     refreshXpBar,
     refreshFreezeBadge,
+    renderStreakCalendar,
+    openLearningGoalModal,
+    closeLearningGoalModal,
+    setLearningDailyTarget,
   });
+}
+
+/* ============================================================
+ * 7. 连胜日历可视化（对标 Duolingo streak calendar）
+ *
+ * 基于现有 dailyStreak + dailyLastDate 反推最近 N 天打卡状态，
+ * 无需新增 store 字段。未来若记录完整历史可无缝升级。
+ * ============================================================ */
+
+/** 返回 YYYY-MM-DD 格式日期。 */
+function formatDate(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+/** 返回距今天 offset 天的日期字符串。offset=0 为今天。 */
+function dateOffset(offset: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - offset);
+  return formatDate(d);
+}
+
+/** 判断某天是否在当前连胜范围内（已打卡）。 */
+function isDayCompleted(dateStr: string): boolean {
+  const streak = Store.state.dailyStreak || 0;
+  const lastDate = Store.state.dailyLastDate || '';
+  if (streak <= 0 || !lastDate) return false;
+  // lastDate 是最近一次打卡日，往前推 streak-1 天都在范围内
+  const last = new Date(lastDate + 'T00:00:00Z');
+  const target = new Date(dateStr + 'T00:00:00Z');
+  const diffDays = Math.round((last.getTime() - target.getTime()) / 86400000);
+  return diffDays >= 0 && diffDays < streak;
+}
+
+/** 判断某天是否使用了护盾保护（简化：不区分，统一归入已完成）。 */
+
+/** 渲染连胜日历到 #streakCalendar（首页）。 */
+export function renderStreakCalendar(): void {
+  if (typeof document === 'undefined') return;
+  const container = document.getElementById('streakCalendar');
+  if (!container) return;
+
+  const streak = Store.state.dailyStreak || 0;
+  const days = 14; // 显示最近 14 天
+  const today = dateOffset(0);
+  const todayDone = isDayCompleted(today);
+
+  // 生成最近 days 天的状态（从最早到最近）
+  const cells: string[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const dateStr = dateOffset(i);
+    const completed = isDayCompleted(dateStr);
+    const isToday = i === 0;
+    const d = new Date(dateStr + 'T00:00:00Z');
+    const weekday = ['日', '一', '二', '三', '四', '五', '六'][d.getUTCDay()];
+    const dayNum = d.getUTCDate();
+
+    let cls = 'streak-cell';
+    if (completed) cls += ' completed';
+    if (isToday) cls += ' today';
+    if (isToday && !completed) cls += ' today-pending';
+
+    const icon = completed ? '🔥' : isToday ? '○' : '';
+    cells.push(
+      `<div class="${cls}" title="${dateStr} 周${weekday}"><div class="streak-cell-week">${weekday}</div><div class="streak-cell-day">${dayNum}</div><div class="streak-cell-icon">${icon}</div></div>`
+    );
+  }
+
+  const streakLabel = streak > 0 ? `🔥 ${streak} 天连胜` : '开始你的连胜';
+  const freezeCount = getStreakFreezes();
+
+  container.innerHTML = `
+    <div class="streak-cal-header">
+      <span class="streak-cal-title">${streakLabel}</span>
+      ${freezeCount > 0 ? `<span class="streak-cal-freeze">🛡️ ${freezeCount}</span>` : ''}
+    </div>
+    <div class="streak-cal-grid">${cells.join('')}</div>
+    <div class="streak-cal-hint">${todayDone ? '✅ 今日已打卡' : '完成今日挑战延续连胜！'}</div>
+  `;
+}
+
+/* ============================================================
+ * 8. 每日学习目标进度环（对标 Duolingo daily goal）
+ *
+ * 复用 store.learningGoal 字段，跨日自动重置。
+ * 在 completeLevel / dailyChallengeSuccess / endless 答题时调用 recordLearningProgress。
+ * ============================================================ */
+
+/** 获取今日学习目标 key（YYYY-MM-DD）。 */
+function todayKey(): string {
+  return dateOffset(0);
+}
+
+/** 获取本周 key（YYYY-Www）。 */
+function weekKey(): string {
+  const d = new Date();
+  const year = d.getUTCFullYear();
+  const start = new Date(Date.UTC(year, 0, 1));
+  const diff = (d.getTime() - start.getTime()) / 86400000;
+  const week = Math.ceil((diff + start.getUTCDay() + 1) / 7);
+  return `${year}-W${String(week).padStart(2, '0')}`;
+}
+
+/** 确保学习目标状态对齐到今天/本周（跨日自动重置）。 */
+function ensureLearningGoalFresh(): void {
+  const g = Store.state.learningGoal;
+  if (!g) {
+    Store.state.learningGoal = {
+      dailyTarget: 10,
+      dailyCompleted: 0,
+      dailyDate: todayKey(),
+      weeklyTarget: 50,
+      weeklyCompleted: 0,
+      weeklyKey: weekKey(),
+      bestDailyStreak: 0,
+      dailyStreakMet: 0,
+      lastMetDate: '',
+    };
+    return;
+  }
+  const today = todayKey();
+  if (g.dailyDate !== today) {
+    // 跨日：检查昨天是否达标，更新 bestDailyStreak
+    if (g.dailyCompleted >= g.dailyTarget) {
+      // 昨天达标，dailyStreakMet 已在达标时 +1
+    } else {
+      // 昨天未达标，重置连续达标计数
+      g.dailyStreakMet = 0;
+    }
+    g.dailyCompleted = 0;
+    g.dailyDate = today;
+  }
+  const wk = weekKey();
+  if (g.weeklyKey !== wk) {
+    g.weeklyCompleted = 0;
+    g.weeklyKey = wk;
+  }
+}
+
+/** 记录一次学习行为（完成 1 题/1 关）。返回是否触发今日达标。 */
+export function recordLearningProgress(count = 1): boolean {
+  ensureLearningGoalFresh();
+  const g = Store.state.learningGoal!;
+  const wasMet = g.dailyCompleted >= g.dailyTarget;
+  g.dailyCompleted += count;
+  g.weeklyCompleted += count;
+  const nowMet = g.dailyCompleted >= g.dailyTarget;
+  if (nowMet && !wasMet) {
+    // 首次达标
+    g.dailyStreakMet++;
+    const today = todayKey();
+    if (g.lastMetDate !== today) {
+      g.lastMetDate = today;
+      if (g.dailyStreakMet > g.bestDailyStreak) {
+        g.bestDailyStreak = g.dailyStreakMet;
+      }
+      Store.save();
+      try {
+        showToast(`🎯 今日目标达成！连续 ${g.dailyStreakMet} 天达标`, 'success', 3000);
+      } catch (e) {
+        /* ignore */
+      }
+      refreshLearningGoalRing();
+      return true;
+    }
+  }
+  Store.save();
+  refreshLearningGoalRing();
+  return false;
+}
+
+/** 获取今日目标完成百分比（0-100）。 */
+export function getLearningGoalPercent(): number {
+  ensureLearningGoalFresh();
+  const g = Store.state.learningGoal!;
+  if (g.dailyTarget <= 0) return 100;
+  return Math.min(100, Math.round((g.dailyCompleted / g.dailyTarget) * 100));
+}
+
+/** 刷新首页学习目标进度环（若 DOM 存在）。 */
+export function refreshLearningGoalRing(): void {
+  if (typeof document === 'undefined') return;
+  const ring = document.getElementById('learningGoalRing');
+  if (!ring) return;
+  ensureLearningGoalFresh();
+  const g = Store.state.learningGoal!;
+  const percent = getLearningGoalPercent();
+  const circ = 2 * Math.PI * 26; // r=26
+  const offset = circ * (1 - percent / 100);
+  const circle = ring.querySelector('.ring-progress') as HTMLElement | null;
+  const num = ring.querySelector('.ring-num') as HTMLElement | null;
+  const label = ring.querySelector('.ring-label') as HTMLElement | null;
+  if (circle) {
+    circle.style.strokeDasharray = String(circ);
+    circle.style.strokeDashoffset = String(offset);
+  }
+  if (num) num.textContent = `${g.dailyCompleted}/${g.dailyTarget}`;
+  if (label) label.textContent = percent >= 100 ? '已达标' : '今日目标';
+  ring.classList.toggle('completed', percent >= 100);
+}
+
+/** 设置每日目标数量。 */
+export function setLearningDailyTarget(e: Event | unknown, ...args: unknown[]): void {
+  const v = args.length > 0 ? (args[0] as number) : (e as number);
+  const target = Math.max(1, Math.min(50, Math.floor(v)));
+  ensureLearningGoalFresh();
+  Store.state.learningGoal!.dailyTarget = target;
+  Store.save();
+  refreshLearningGoalRing();
+  renderLearningGoalModalContent();
+  try {
+    showToast(`每日目标已设为 ${target} 题`, 'info', 2000);
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+/** 打开学习目标设置 Modal。 */
+export function openLearningGoalModal(): void {
+  if (typeof document === 'undefined') return;
+  let modal = document.getElementById('learningGoalModal');
+  if (!modal) {
+    modal = createLearningGoalModalElement();
+    document.body.appendChild(modal);
+  }
+  renderLearningGoalModalContent();
+  modal.style.display = 'flex';
+  setTimeout(() => {
+    modal!.style.opacity = '1';
+  }, 10);
+}
+
+export function closeLearningGoalModal(): void {
+  const modal = document.getElementById('learningGoalModal');
+  if (!modal) return;
+  modal.style.opacity = '0';
+  setTimeout(() => {
+    modal.style.display = 'none';
+  }, 200);
+}
+
+function renderLearningGoalModalContent(): void {
+  const body = document.getElementById('learningGoalModalBody');
+  if (!body) return;
+  ensureLearningGoalFresh();
+  const g = Store.state.learningGoal!;
+  const percent = getLearningGoalPercent();
+  const options = [5, 10, 20, 30];
+  body.innerHTML = `
+    <div class="lg-ring-section">
+      <svg class="lg-big-ring" width="120" height="120" viewBox="0 0 64 64">
+        <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(0,0,0,0.08)" stroke-width="6"/>
+        <circle class="lg-big-progress" cx="32" cy="32" r="26" fill="none" stroke="url(#lgGrad)" stroke-width="6" stroke-linecap="round" transform="rotate(-90 32 32)" />
+        <defs><linearGradient id="lgGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c6bff"/><stop offset="1" stop-color="#4ecdc4"/></linearGradient></defs>
+        <text x="32" y="34" text-anchor="middle" font-size="11" font-weight="900" fill="var(--trackA)">${g.dailyCompleted}/${g.dailyTarget}</text>
+      </svg>
+      <div class="lg-percent">${percent}%</div>
+    </div>
+    <div class="lg-target-section">
+      <div class="lg-section-title">每日目标</div>
+      <div class="lg-target-options">
+        ${options
+          .map(
+            (o) =>
+              `<button class="lg-target-btn${g.dailyTarget === o ? ' active' : ''}" data-action="setLearningDailyTarget" data-args='[${o}]'>${o} 题</button>`
+          )
+          .join('')}
+      </div>
+    </div>
+    <div class="lg-stats-grid">
+      <div class="lg-stat"><div class="lg-stat-num">${g.dailyStreakMet}</div><div class="lg-stat-label">连续达标</div></div>
+      <div class="lg-stat"><div class="lg-stat-num">${g.bestDailyStreak}</div><div class="lg-stat-label">最佳记录</div></div>
+      <div class="lg-stat"><div class="lg-stat-num">${g.weeklyCompleted}</div><div class="lg-stat-label">本周完成</div></div>
+      <div class="lg-stat"><div class="lg-stat-num">${g.weeklyTarget}</div><div class="lg-stat-label">周目标</div></div>
+    </div>
+  `;
+  // 设置进度环
+  const circ = 2 * Math.PI * 26;
+  const offset = circ * (1 - percent / 100);
+  const prog = body.querySelector('.lg-big-progress') as HTMLElement | null;
+  if (prog) {
+    prog.style.strokeDasharray = String(circ);
+    prog.style.strokeDashoffset = String(offset);
+  }
+}
+
+function createLearningGoalModalElement(): HTMLElement {
+  const modal = document.createElement('div');
+  modal.id = 'learningGoalModal';
+  modal.className = 'share-card-modal';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('aria-label', '学习目标');
+  modal.innerHTML = `
+    <div class="share-card-box lg-box">
+      <div class="share-card-header">
+        <span class="share-card-title">🎯 学习目标</span>
+        <button class="ctrl-btn share-card-close" data-action="closeLearningGoalModal" aria-label="关闭">✕</button>
+      </div>
+      <div class="lg-body" id="learningGoalModalBody"></div>
+      <button class="ctrl-btn" data-action="closeLearningGoalModal">完成</button>
+    </div>
+  `;
+  return modal;
 }

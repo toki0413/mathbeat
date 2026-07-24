@@ -15,6 +15,7 @@ import type { Transport, TransportEvent } from '../core/transport';
 import { showStars, showEducationCard } from '../ui-render';
 import { arraysEqual, euclideanRhythm } from '../utils';
 import { registerActions } from '../events';
+import { openPracticeFromWorld6 } from '../practice-mode';
 
 /* ===== WORLD 6: RECURSIVE RHYTHM ===== */
 export function renderWorld6(container: HTMLElement, lid: string) {
@@ -52,7 +53,7 @@ export function renderWorld6(container: HTMLElement, lid: string) {
     (state.w6.chordEnabled ? ' active-a' : '') +
     '" id="w6ChordBtn" data-action="w6ToggleChords">🔢 质数和弦</button><button class="ctrl-btn' +
     (state.w6.recursiveEnabled ? ' active-a' : '') +
-    '" id="w6RecursiveBtn" data-action="w6ToggleRecursive">🌳 递归</button><button class="verify-btn" data-action="w6Verify">验证</button></div><div class="result-msg" id="w6Result"></div><div class="stars-row" id="w6Stars"></div><button class="next-btn" id="w6Next" data-action="nextLevel">下一关 →</button></div>';
+    '" id="w6RecursiveBtn" data-action="w6ToggleRecursive">🌳 递归</button><button class="verify-btn" data-action="w6Verify">验证</button></div><div class="practice-entry" style="margin-top:8px;text-align:center"><button class="ctrl-btn" data-action="w6OpenPractice" style="background:linear-gradient(135deg,#7c6bff,#a78bfa);color:#fff;font-size:13px">🎯 进入分段练习</button></div><div class="result-msg" id="w6Result"></div><div class="stars-row" id="w6Stars"></div><button class="next-btn" id="w6Next" data-action="nextLevel">下一关 →</button></div>';
   w6RenderGrid();
 }
 export function w6RenderGrid() {
@@ -225,6 +226,14 @@ function w6CheckRecursiveLayers() {
     Store.save();
   }
 }
+
+/** 打开分段练习模式（基于当前关卡的 E(k,n) 配置）。 */
+export function w6OpenPractice() {
+  if (!state.w6 || !state.w6.target) return;
+  w6Stop();
+  openPracticeFromWorld6(state.w6.target.k, state.w6.target.n, state.w6.bpm || 120);
+}
+
 export function w6Verify() {
   const target = euclideanRhythm(state.w6.target.k, state.w6.target.n);
   const ok = arraysEqual(state.w6.cells, target);
@@ -265,6 +274,7 @@ registerActions({
   w6ToggleChords,
   w6ToggleRecursive,
   w6Verify,
+  w6OpenPractice,
   w6ToggleCell: (_e, i) => w6ToggleCell(i as number),
 });
 Object.assign(window as any, {

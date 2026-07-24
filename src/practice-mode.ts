@@ -491,6 +491,67 @@ export function openPracticeFromWorld1(a: number, b: number, lcm: number, bpm: n
   });
 }
 
+/**
+ * 基于世界4 的双环对齐配置启动练习模式（结构与世界1 同构，命名独立以便未来差异化）。
+ * a/b 为两环周期，lcm 为重合步数。
+ */
+export function openPracticeFromWorld4(a: number, b: number, lcm: number, bpm: number): void {
+  const stepsA: boolean[] = [];
+  const stepsB: boolean[] = [];
+  for (let i = 1; i <= lcm; i++) {
+    stepsA.push(i % a === 0);
+    stepsB.push(i % b === 0);
+  }
+  openPracticeMode({
+    tracks: [
+      { name: '外环', steps: stepsA, sound: 'kick', vol: 0.5 },
+      { name: '内环', steps: stepsB, sound: 'snare', vol: 0.4 },
+    ],
+    totalSteps: lcm,
+    baseBpm: bpm,
+    stepsPerBeat: 1,
+    title: `练习 ${a}步环:${b}步环 对齐`,
+  });
+}
+
+/**
+ * 基于世界6 的欧几里得节奏启动练习模式（单主轨道 + 旋律层）。
+ * k 个脉冲分布在 n 步上。
+ */
+export function openPracticeFromWorld6(k: number, n: number, bpm: number): void {
+  // 复用 utils 的 euclideanRhythm 生成目标 pattern
+  const pattern = euclideanRhythmLocal(k, n);
+  const steps: boolean[] = pattern.map((v) => v === 1);
+  // 旋律层：用斐波那契式音高（参考世界6 原生逻辑），仅在脉冲步触发
+  const fibFreqs = [261.63, 329.63, 392.0, 440.0, 523.25, 587.33];
+  const melodySteps: boolean[] = steps.slice();
+  openPracticeMode({
+    tracks: [
+      { name: 'E(k,n) 节奏', steps, sound: 'kick', vol: 0.5 },
+      { name: '旋律层', steps: melodySteps, sound: 'tone', freq: fibFreqs[k % fibFreqs.length], vol: 0.3 },
+    ],
+    totalSteps: n,
+    baseBpm: bpm,
+    stepsPerBeat: 1,
+    title: `练习 E(${k},${n}) 节奏`,
+  });
+}
+
+/** 本地实现的欧几里得节奏（避免与 utils 循环依赖，逻辑等价）。 */
+function euclideanRhythmLocal(k: number, n: number): number[] {
+  if (n <= 0) return [];
+  if (k <= 0) return new Array(n).fill(0);
+  if (k >= n) return new Array(n).fill(1);
+  const pattern = new Array(n).fill(0);
+  // Bjorklund 算法简化版：均匀分布 k 个脉冲
+  const spacing = n / k;
+  for (let i = 0; i < k; i++) {
+    const idx = Math.floor(i * spacing);
+    pattern[idx % n] = 1;
+  }
+  return pattern;
+}
+
 /* ============================================================
  * 11. 注册 actions 与全局暴露
  * ============================================================ */
@@ -514,6 +575,8 @@ if (typeof window !== 'undefined') {
   Object.assign(window as any, {
     openPracticeMode,
     openPracticeFromWorld1,
+    openPracticeFromWorld4,
+    openPracticeFromWorld6,
     closePracticeMode,
     togglePracticePlay,
     stopPractice,

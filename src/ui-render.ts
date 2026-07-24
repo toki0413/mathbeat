@@ -11,6 +11,7 @@ import {
   LEVEL_HINTS,
   LEVEL_TUTORIALS,
 } from './worlds';
+import type { AchievementRarity } from './worlds';
 import { escapeHtml, getDailySeed } from './utils';
 import { MATH_VISUALS } from './math-visuals';
 import { renderConceptMap, CONCEPT_NODES, getConceptConnections } from './concept-map';
@@ -777,13 +778,49 @@ export function renderAchievements() {
   if (!container) return;
   container.innerHTML = '';
 
+  // 顶部稀有度统计卡
+  const rarities: { key: AchievementRarity; label: string; icon: string }[] = [
+    { key: 'common', label: '普通', icon: '⚪' },
+    { key: 'rare', label: '稀有', icon: '🔵' },
+    { key: 'epic', label: '史诗', icon: '🟣' },
+    { key: 'legendary', label: '传说', icon: '🟡' },
+  ];
+  const statsHtml =
+    '<div class="ach-rarity-stats">' +
+    rarities
+      .map((r) => {
+        const all = ACHIEVEMENTS.filter((a) => (a.rarity || 'common') === r.key);
+        const got = all.filter((a) => earned.has(a.id)).length;
+        const total = all.length;
+        return (
+          '<div class="ach-rarity-stat rarity-' +
+          r.key +
+          (got === total && total > 0 ? ' complete' : '') +
+          '"><div class="ach-rarity-icon">' +
+          r.icon +
+          '</div><div class="ach-rarity-num">' +
+          got +
+          '/' +
+          total +
+          '</div><div class="ach-rarity-label">' +
+          r.label +
+          '</div></div>'
+        );
+      })
+      .join('') +
+    '</div>';
+  container.innerHTML = statsHtml;
+
   function renderCategoryCard(a: typeof ACHIEVEMENTS[0]): string {
     const ok = earned.has(a.id);
+    const rarity = a.rarity || 'common';
     if (a.hidden && !ok) {
       return '<div class="ach-card locked"><div class="ach-card-q">?</div><div class="ach-card-name">???</div><div class="ach-card-desc">解锁后显示</div></div>';
     }
+    const rarityTag = '<span class="ach-rarity-tag rarity-' + rarity + '">' + rarityLabel(rarity) + '</span>';
     return (
-      '<div class="ach-card' +
+      '<div class="ach-card rarity-' +
+      rarity +
       (ok ? '' : ' locked') +
       '"><div class="ach-card-icon">' +
       a.icon +
@@ -791,11 +828,16 @@ export function renderAchievements() {
       escapeHtml(achievementName(a)) +
       '</div><div class="ach-card-desc">' +
       escapeHtml(achievementDesc(a)) +
-      '</div></div>'
+      '</div>' +
+      rarityTag +
+      '</div>'
     );
   }
 
   function appendChunk(idx: number) {
+    if (idx === 0) {
+      // 统计卡已渲染，从分类索引 0 开始追加（idx 这里同时充当 cats 索引）
+    }
     if (idx >= cats.length) return;
     const c = cats[idx];
     const items = ACHIEVEMENTS.filter((a) => a.cat === c.key);
@@ -811,6 +853,19 @@ export function renderAchievements() {
   }
 
   appendChunk(0);
+}
+
+function rarityLabel(r: AchievementRarity): string {
+  switch (r) {
+    case 'rare':
+      return '稀有';
+    case 'epic':
+      return '史诗';
+    case 'legendary':
+      return '传说';
+    default:
+      return '普通';
+  }
 }
 
 export function updateDailyBanner() {

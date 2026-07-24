@@ -129,6 +129,13 @@ export function w7Verify() {
   }
 }
 
+/** 进入世界7 概率骰子关卡的分段练习模式。 */
+export function w7OpenPractice() {
+  if (!state.w7) return;
+  w7Stop();
+  openPracticeFromWorld7(state.w7.prob, state.w7.cells.length, state.w7.bpm || 120);
+}
+
 export const W7_SCALE_NAMES = ['C', 'D', 'E', 'F#', 'G#', 'A#'];
 export const W7_SCALE_FREQS = [261.63, 293.66, 329.63, 369.99, 415.3, 466.16];
 const W7_STATE_COUNT = 6;
@@ -409,6 +416,7 @@ registerActions({
   w7NormalPlay,
   w7NormalGen,
   w7NormalVerify,
+  w7OpenPractice,
 });
 registerInputs({
   w7ProbChange: (e) => w7ProbChange((e.target as HTMLInputElement).value),
@@ -438,6 +446,7 @@ Object.assign(window as any, {
   w7NormalStop: w7NormalStop,
   w7NormalUpdate: w7NormalUpdate,
   w7NormalVerify: w7NormalVerify,
+  w7OpenPractice: w7OpenPractice,
   w7ProbChange: w7ProbChange,
   w7RenderGrid: w7RenderGrid,
   w7RollDice: w7RollDice,

@@ -363,6 +363,11 @@ if (typeof window !== 'undefined') {
     openLearningGoalModal,
     closeLearningGoalModal,
     setLearningDailyTarget,
+    // 周末双倍 XP 活动相关 API（供 e2e 测试与外部脚本调用）
+    isWeekend,
+    getXpMultiplier,
+    applyXpMultiplier,
+    addXp,
   });
 }
 

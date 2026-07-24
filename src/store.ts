@@ -463,3 +463,8 @@ export function resetGameData(): void {
     setTimeout(() => window.location.reload(), 600);
   });
 }
+
+// 暴露 Store 到 window（供 e2e 测试与外部脚本访问用户进度）
+if (typeof window !== 'undefined') {
+  (window as any).Store = Store;
+}

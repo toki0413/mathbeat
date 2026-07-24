@@ -21,11 +21,11 @@
          Web 服务器响应头补全。 -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' data: blob:; font-src 'self' data:; base-uri 'self'; form-action 'self'; object-src 'none';"
-    />
-    <!-- 注意：frame-ancestors / report-uri 等 CSP 指令无法通过 <meta> 生效，
-         必须由服务端响应头下发；此处留空，部署时在 Web 服务器配置
-         Content-Security-Policy 头补全 frame-ancestors 'none'。 -->
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' data: blob:; font-src 'self' data:; base-uri 'self'; form-action 'self'; object-src 'none'; worker-src 'self';"
+    /><!-- style-src 暂留 'unsafe-inline'：动态注入样式（主题切换/可视化节拍等）依赖它；
+         未来可改用 nonce 或 hash 收紧（需服务端配合生成每请求 nonce）。 -->
+    <!-- 注意：frame-ancestors 'none' 不能通过 <meta> 下发（浏览器会忽略并警告），
+         必须由服务端响应头下发。见 public/_headers 中的 Content-Security-Policy 配置。 -->
     <meta name="referrer" content="no-referrer" />
     <meta name="color-scheme" content="light dark" />
     <style>
@@ -37,13 +37,13 @@
       :root {
         --bg: #fff8f0;
         --card: #ffffff;
-        --trackA: #ff8c42;
+        --trackA: #ff8c42; /* a11y: 若用作正文文字色对比度不足，建议改用更深的 #c75a1a；暂不改（影响范围大） */
         --trackB: #e8587a;
         --both: #ffd166;
-        --success: #7bc67e;
-        --error: #e85d5d;
+        --success: #4a9d4e; /* a11y: 由 #7bc67e 调深以满足 WCAG AA ≥4.5:1 */
+        --error: #c0392b; /* a11y: 由 #e85d5d 调深以满足 WCAG AA ≥4.5:1 */
         --text: #2d2d3a;
-        --dim: #8e8ea0;
+        --dim: #6b6b7b; /* a11y: 由 #8e8ea0 调深，对比度 3.08:1 → ≥4.5:1 */
         --radius: 18px;
         --w1: #ff8c42;
         --w2: #e8587a;
@@ -3490,6 +3490,30 @@
         background: #f0f0f4;
         color: var(--text);
       }
+      /* a11y: skip-link 聚焦可见样式（WCAG 2.4.7 / 2.4.3）。覆盖内联的 left:-9999px。 */
+      .skip-link:focus,
+      .skip-link:focus-visible {
+        left: 0 !important;
+        top: 0;
+        z-index: 10000;
+        background: #fff;
+        color: #1a1a1a;
+        padding: 8px 16px;
+        border-radius: 0 0 8px 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+      /* a11y: 屏幕阅读器专用，视觉隐藏但可读（WCAG 1.3.1） */
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
     </style>
   </head>
   <body>
@@ -3505,6 +3529,7 @@
     <div id="hitFlashOverlay" style="position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity 90ms ease-out;z-index:9999"></div>
 
     <div id="homeScreen" class="screen active" role="main" aria-label="主页">
+      <h1 class="sr-only">MathBeat 主页</h1>
       <div class="home-header">
         <div class="home-title" data-i18n="app.title">数律 MathBeat</div>
         <div class="home-sub" data-i18n="app.subtitle">数学 × 音乐</div>
@@ -3991,7 +4016,7 @@
       <div class="overlay-card">
         <div class="overlay-title">教师面板</div>
         <div class="teacher-login" id="teacherLogin">
-          <input type="password" id="teacherPwd" placeholder="输入教师密码" /><button data-action="teacherLogin">
+          <input type="password" id="teacherPwd" placeholder="输入教师密码" aria-label="教师密码" /><button data-action="teacherLogin">
             登录
           </button>
         </div>
@@ -4356,6 +4381,7 @@
     </div>
 
     <div id="achievementsScreen" class="screen">
+      <h2 class="sr-only">成就</h2>
       <div class="ach-header">
         <span class="back-btn" data-action="closeAchievements">←</span>
         <div style="font-size: 20px; font-weight: 800">🏆 成就图鉴</div>
@@ -4365,6 +4391,7 @@
     </div>
 
     <div id="settingsScreen" class="screen">
+      <h2 class="sr-only">设置</h2>
       <div class="ach-header">
         <span class="back-btn" data-action="closeSettings">←</span>
         <div style="font-size: 20px; font-weight: 800">⚙️ 设置</div>
@@ -4386,19 +4413,20 @@
               <span style="font-size: 14px; font-weight: 700">主音量</span>
               <span id="masterVolumeVal" style="font-size: 13px; font-weight: 700; color: var(--dim)">80%</span>
             </div>
-            <input type="range" id="masterVolumeSlider" min="0" max="100" value="80" style="width: 100%" data-input="setMasterVolume">
+            <input type="range" id="masterVolumeSlider" min="0" max="100" value="80" style="width: 100%" data-input="setMasterVolume" aria-label="主音量">
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0">
             <span style="font-size: 14px; font-weight: 700">音色包</span>
             <select
               id="settingSoundPack"
+              aria-label="音色包"
               data-input="changeSoundPack"
               style="font-size: 14px; font-weight: 700; padding: 4px 8px; border-radius: 8px; border: 2px solid #e8e4de"
             ></select>
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0">
             <span style="font-size: 14px; font-weight: 700">视觉节拍（听障辅助）</span>
-            <button class="ctrl-btn" id="settingVisualBeatBtn" data-action="toggleSettingVisualBeat">关闭</button>
+            <button class="ctrl-btn" id="settingVisualBeatBtn" data-action="toggleSettingVisualBeat" aria-label="视觉节拍模式开关">关闭</button>
           </div>
         </div>
         <div class="challenge-card" style="margin-bottom: 12px">
@@ -4407,6 +4435,7 @@
             <span style="font-size: 14px; font-weight: 700">难度</span>
             <select
               id="settingDifficulty"
+              aria-label="难度"
               data-input="changeDifficulty"
               style="font-size: 14px; font-weight: 700; padding: 4px 8px; border-radius: 8px; border: 2px solid #e8e4de"
             >

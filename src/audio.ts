@@ -178,6 +178,10 @@ function scheduleHitFlash(time: number, color: string): void {
   const delay = Math.max(0, (time - ctx.currentTime) * 1000);
   // 忽略太远未来的闪光，避免 setTimeout 堆积
   if (delay > 2000) return;
+  // 尊重 prefers-reduced-motion（WCAG 2.3.3）：前庭/动晕症用户不闪光
+  try {
+    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  } catch (e) { /* ignore */ }
   const scheduledWallTime = performance.now() + delay;
   if (scheduledWallTime - lastFlashTime < FLASH_THROTTLE_MS) return;
   lastFlashTime = scheduledWallTime;
@@ -185,7 +189,8 @@ function scheduleHitFlash(time: number, color: string): void {
     const el = document.getElementById('hitFlashOverlay');
     if (!el) return;
     el.style.backgroundColor = color;
-    el.style.opacity = '0.18';
+    // 峰值亮度从 0.18 降至 0.1，降低光敏触发风险
+    el.style.opacity = '0.1';
     setTimeout(() => {
       el.style.opacity = '0';
     }, 90);
@@ -538,12 +543,15 @@ function haptic(pattern: number[]) {
 }
 
 export function playCorrect(): void {
+  // 听障视觉反馈（WCAG 1.2.1 音频替代）：在 sfx 检查之前触发，确保关闭音效时仍有视觉反馈
+  try { triggerVisualFeedback('correct'); } catch (e) { /* ignore */ }
   if (Store.state.settings.sfx === false) return;
   playPerfect();
   haptic([40, 40, 40]);
 }
 
 export function playWrong(): void {
+  try { triggerVisualFeedback('wrong'); } catch (e) { /* ignore */ }
   if (Store.state.settings.sfx === false) return;
   playFail();
   haptic([120]);
@@ -764,6 +772,7 @@ export function playNoiseBurst(dur: number = 0.05, vol: number = 0.2, t?: number
 
 /* ===== UI FEEDBACK SFX ===== */
 export function playClick(): void {
+  try { triggerVisualFeedback('click'); } catch (e) { /* ignore */ }
   if (Store.state.settings.sfx === false) return;
   const ctx = getAudioCtx();
   playTone(880, 0.05, 'sine', 0.08, ctx.currentTime);

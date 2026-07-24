@@ -45,6 +45,8 @@ import { selectScienceType, goScienceStep, downloadScienceExport } from './scien
 import { setMasterVolume } from './audio';
 import { generateDailyRecommendations } from './learning-insights';
 import { setVisualBeat } from './visual-beat';
+import { reportError } from './error-report';
+import { showToast } from './ui-feedback';
 
 export function showScreen(name: string) {
   playMenuSwipe();
@@ -724,7 +726,7 @@ export function teacherLogin() {
     input.placeholder = '请 ' + remain + ' 秒后再试';
     return;
   }
-  // 预设密码哈希：PBKDF2-SHA256(password='mathbeat-teacher-2024', salt='mathbeat-static-salt-v1', iterations=100000)
+  // 预设密码哈希（PBKDF2-SHA256，盐与迭代次数见下方参数；明文密码不写入源码）
   // 因本地校验无法真正防攻击者（攻击者可直接读源码后跳过此函数），
   // 此处仅作"防止路人误操作 + 演示合规姿态"的最低门禁，
   // 真实生产部署应通过服务端 OAuth/SSO 校验。
@@ -741,11 +743,16 @@ export function teacherLogin() {
       document.getElementById('teacherContent')!.classList.add('show');
       renderTeacher();
     })
-    .catch(() => {
-      // Web Crypto 不可用时降级：允许进入但标记（仅本地演示用）
-      document.getElementById('teacherLogin')!.style.display = 'none';
-      document.getElementById('teacherContent')!.classList.add('show');
-      renderTeacher();
+    .catch((err) => {
+      // Fail-closed：鉴权服务异常时禁止进入教师面板（安全原则）
+      reportError(err, 'teacher auth');
+      const errEl = document.getElementById('teacherLoginError');
+      if (errEl) {
+        errEl.textContent = '鉴权服务不可用，请稍后重试';
+        errEl.style.display = 'block';
+      } else {
+        try { showToast('鉴权服务不可用，请稍后重试', 'error', 4000); } catch (_) {}
+      }
     });
 }
 

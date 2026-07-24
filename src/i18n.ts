@@ -295,9 +295,40 @@ export function toggleLang() {
   setLang(currentLang === 'zh' ? 'en' : 'zh');
 }
 
-export function t(key: string) {
-  const dict = translations[currentLang as keyof typeof translations] || translations.zh;
-  return (dict as Record<string, string>)[key] || (translations.zh as Record<string, string>)[key] || key;
+export function t(key: string, vars?: Record<string, string | number>): string {
+  const lang = currentLang || 'zh';
+  const dict = translations[lang as keyof typeof translations] || translations.zh;
+  let s = (dict as Record<string, string>)[key];
+  if (s === undefined) s = (translations.zh as Record<string, string>)[key];
+  if (s === undefined) return key;
+  if (vars) {
+    for (const k of Object.keys(vars)) {
+      s = s.replace(new RegExp('\\{' + k + '\\}', 'g'), String(vars[k]));
+    }
+  }
+  return s;
+}
+
+/** 按当前语言格式化日期（替代硬编码 zh-CN） */
+export function formatDate(d: Date, opts?: Intl.DateTimeFormatOptions): string {
+  const lang = currentLang || 'zh';
+  const locale = lang === 'en' ? 'en-US' : 'zh-CN';
+  try {
+    return d.toLocaleDateString(locale, opts || { year: 'numeric', month: 'long', day: 'numeric' });
+  } catch (e) {
+    return d.toISOString().slice(0, 10);
+  }
+}
+
+/** 按当前语言格式化时间 */
+export function formatTime(d: Date, opts?: Intl.DateTimeFormatOptions): string {
+  const lang = currentLang || 'zh';
+  const locale = lang === 'en' ? 'en-US' : 'zh-CN';
+  try {
+    return d.toLocaleTimeString(locale, opts || { hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    return d.toTimeString().slice(0, 8);
+  }
 }
 
 export function applyTranslations() {

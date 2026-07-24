@@ -9,6 +9,10 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     target: 'es2020',
+    // 生产启用隐藏 sourcemap：不上传 CDN，但可用于错误解析（Sentry 等）
+    sourcemap: 'hidden',
+    // bundle size 预算：默认 500，收紧到 200 提醒大 chunk
+    chunkSizeWarningLimit: 200,
     // 启用摇树优化（移除曾误设的 treeshake: false）
     rollupOptions: {
       input: {
@@ -42,6 +46,17 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
-    include: ['src/**/*.test.ts']
+    include: ['src/**/*.test.ts'],
+    // 覆盖率配置：阈值设低（40%）因当前覆盖率低，避免立即失败
+    // 注意：需安装 @vitest/coverage-v8 才能实际运行（当前未安装，配置先就位）
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'lcov'],
+      reportsDirectory: './coverage',
+      lines: 40,
+      functions: 40,
+      branches: 30,
+      statements: 40
+    }
   }
 })

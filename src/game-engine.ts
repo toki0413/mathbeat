@@ -26,6 +26,7 @@ import { renderWorld6, w6Stop } from './worlds/world6';
 import { renderWorld7, w7Stop } from './worlds/world7';
 import { renderWorld8, w8Stop } from './worlds/world8';
 import { addXp, xpForAchievement, XP_REWARDS, recordLearningProgress } from './progression';
+import { announce } from './a11y';
 
 /* ===== GAME STATE =====
  * Runtime state backed by Store.state for persisted keys.
@@ -427,10 +428,18 @@ export function completeLevel(wid: number, lid: string, stars: number): void {
     playAchievement();
   }
   // XP 奖励：按星级 + 首次通关 bonus
+  let leveledUpTo = 0;
   try {
     const xpReward =
       (XP_REWARDS.levelStar[stars as 1 | 2 | 3] || 0) + (isFirstClear ? XP_REWARDS.firstClearBonus : 0);
-    if (xpReward > 0) addXp(xpReward, '通关 ' + lid);
+    if (xpReward > 0) {
+      // 节流：XP 播报只在升级时触发（检查 level 是否变化）
+      const lvlBefore = Store.state.level || 1;
+      const didLevelUp = addXp(xpReward, '通关 ' + lid);
+      if (didLevelUp && (Store.state.level || 1) > lvlBefore) {
+        leveledUpTo = Store.state.level || 1;
+      }
+    }
     // 记录学习目标进度（首次通关计 1，重复通关也计以激励练习）
     recordLearningProgress(1);
   } catch (e) {
@@ -444,6 +453,15 @@ export function completeLevel(wid: number, lid: string, stars: number): void {
       Store.state.noHintWorld = true;
       Store.save();
     }
+  }
+  // aria-live 播报（WCAG 4.1.3）：关卡完成 + 星级，升级时追加等级。
+  // 合并为单条 announce，避免同帧多次调用在 announce 内部 50ms 延迟写入时互相覆盖导致信息丢失。
+  try {
+    let msg = '关卡完成 ' + stars + '星';
+    if (leveledUpTo > 0) msg += '，升级到 Lv.' + leveledUpTo;
+    announce(msg, 'polite');
+  } catch (e) {
+    /* a11y 播报失败不影响主流程 */
   }
 }
 export function useHint(): void {

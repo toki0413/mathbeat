@@ -45,5 +45,7 @@
       "form_factor": "narrow",
       "label": "MathBeat 主页与世界1"
     }
-  ]
+  ],
+  "_todo_screenshots": "TODO: 需补充 PNG screenshot（PWA 安装弹窗与可安装性要求 raster 图）——窄屏 540x720（form_factor: narrow）+ 宽屏 1280x720（form_factor: wide），type: image/png。当前仅 SVG，部分平台（如 Android Chrome）不展示 SVG screenshot。",
+  "_todo_icons_maskable": "已确认 icons 数组含 512x512 且 purpose 含 'maskable'（见上方 512x512 条目）。maskable 资源需保证安全区（safe zone ≥ 80%）内关键内容不被裁剪。"
 }

@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
@@ -14,6 +14,8 @@ export default defineConfig({
     navigationTimeout: 15000,
   },
   projects: [
+    // CI 默认仅安装 chromium，本地运行 firefox/webkit 前需先执行：
+    //   npx playwright install firefox webkit
     {
       name: 'chromium',
       use: {
@@ -24,6 +26,8 @@ export default defineConfig({
         },
       },
     },
+    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
   ],
   webServer: {
     command: 'npm run dev',

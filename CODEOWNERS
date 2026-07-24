@@ -1,0 +1,9 @@
+# MathBeat 代码所有权
+# 默认审查者
+* @mathbeat/core
+
+# 各模块维护者
+/src/worlds/ @mathbeat/worlds
+/src/audio.ts @mathbeat/audio
+/src/a11y.ts @mathbeat/a11y
+/src/science* @mathbeat/science

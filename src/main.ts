@@ -1,11 +1,11 @@
 import { toggleLang, applyTranslations, getLang, setLang, t } from './i18n';
 import { idbGet, idbSet, idbDelete, migrateFromLocalStorage } from './storage';
 import { SOUND_PACKS, DEFAULT_SOUND_PACK } from './sound-packs';
-import { MATH_VISUALS } from './math-visuals';
+import { MATH_VISUALS, stopAllMathVisuals } from './math-visuals';
 import { renderConceptMap, CONCEPT_NODES, getConceptConnections } from './concept-map';
 import { getBossProblem } from './boss-problems';
 import { initA11y, installModalKeyboardHandlers, announce } from './a11y';
-import { installGlobalErrorHandlers, setConsoleMirror, reportError } from './error-report';
+import { installGlobalErrorHandlers, setConsoleMirror, reportError, initWebVitalsReporting } from './error-report';
 
 import {
   Store,
@@ -148,6 +148,9 @@ import {
   restartLevel,
   toggleGamePause,
 } from './game-engine';
+// TODO(code-splitting): worlds-bundle 约 328KB 全静态 import，路由级代码分割缺失。
+// 本次未改为动态 import 以避免破坏 8 个 world 渲染函数的多处引用，后续需重构为
+// 按需加载（showScreen 切屏时动态 import 对应 world 模块）。
 import { renderWorld1 } from './worlds/world1';
 import { renderWorld2 } from './worlds/world2';
 import { renderWorld3 } from './worlds/world3';
@@ -379,8 +382,20 @@ function enhanceA11y(root: ParentNode) {
 function startA11yObserver() {
   if (typeof MutationObserver === 'undefined') return;
   enhanceA11y(document.body);
-  const obs = new MutationObserver(() => enhanceA11y(document.body));
+  let a11yDebounce: ReturnType<typeof setTimeout> | null = null;
+  const obs = new MutationObserver(() => {
+    if (a11yDebounce) clearTimeout(a11yDebounce);
+    a11yDebounce = setTimeout(() => enhanceA11y(document.body), 50);
+  });
   obs.observe(document.body, { childList: true, subtree: true });
+}
+
+let homeVizRunning = false;
+let homeVizLastActive = 0;
+
+/* 停止首页可视化器的 RAF/setTimeout 循环，供切屏/卸载时调用 */
+export function stopHomeVisualizer() {
+  homeVizRunning = false;
 }
 
 function startHomeVisualizer() {
@@ -391,12 +406,14 @@ function startHomeVisualizer() {
   const analyser = getAnalyser();
   if (!analyser) return;
   const data = new Uint8Array(analyser.frequencyBinCount);
-  let running = true;
+  homeVizRunning = true;
+  homeVizLastActive = Date.now();
 
   function draw() {
-    if (!running) return;
+    if (!homeVizRunning) return;
     const active = !!document.getElementById('homeScreen')?.classList.contains('active');
     if (active) {
+      homeVizLastActive = Date.now();
       requestAnimationFrame(draw);
       analyser!.getByteFrequencyData(data);
       ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
@@ -410,8 +427,12 @@ function startHomeVisualizer() {
         ctx!.fillRect(i * barW + 1, canvas!.height - h, barW - 2, h);
       }
     } else {
-      // 不在首页时降低刷新频率，减少 CPU/GPU 占用
+      // 不在首页时降低刷新频率；超过 10 秒未活跃则完全停止以释放 CPU/GPU
       ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
+      if (Date.now() - homeVizLastActive > 10000) {
+        homeVizRunning = false;
+        return;
+      }
       setTimeout(draw, 300);
     }
   }
@@ -443,6 +464,12 @@ window.onload = function () {
     }
   } catch (e) {
     reportError(e, 'init global handlers');
+  }
+  // Web Vitals 采集（LCP/CLS/INP），失败静默不影响主流程
+  try {
+    initWebVitalsReporting();
+  } catch (e) {
+    reportError(e, 'web-vitals init');
   }
   // 初始化事件委托，接管 data-action / data-input 的全局点击与输入监听
   initEventDelegation();

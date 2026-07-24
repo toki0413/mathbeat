@@ -10,6 +10,8 @@ export interface Settings {
   difficulty: 'easy' | 'auto' | 'hard';
   soundPack: string;
   masterVolume: number;
+  /** 听障视觉节拍模式：开启后节拍会以视觉闪烁/缩放呈现，不依赖音频（WCAG 1.4.2 替代） */
+  visualBeat?: boolean;
 }
 
 export interface GameState {

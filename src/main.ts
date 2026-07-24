@@ -126,6 +126,7 @@ import {
   changeSoundPack,
   toggleSettingBgm,
   toggleSettingSfx,
+  toggleSettingVisualBeat,
   registerUiRenderActions,
 } from './ui-render';
 import {
@@ -297,6 +298,7 @@ import * as practiceModeModule from './practice-mode';
 import * as learningInsightsModule from './learning-insights';
 import { refreshXpBar, refreshFreezeBadge } from './progression';
 import { registerActions, initEventDelegation } from './events';
+import { setVisualBeat } from './visual-beat';
 
 declare global {
   interface Window {
@@ -424,6 +426,21 @@ window.onload = function () {
     if (import.meta.env && import.meta.env.DEV) setConsoleMirror(true);
     initA11y();
     installModalKeyboardHandlers();
+    // file:// 协议提示（原 index.html 内联 <script>，为收紧 CSP 迁移至此）
+    if (location.protocol === 'file:') {
+      const txt = document.getElementById('loadingText');
+      if (txt) txt.innerHTML = '正在本地运行... <span style="font-size:12px">部分功能（PWA离线、MIDI导出）可能需要服务器环境</span>';
+    }
+    // skip-link 焦点切换（原 onfocus/onblur 内联属性，为收紧 CSP 迁移至此）
+    const skipLink = document.querySelector('.skip-link') as HTMLAnchorElement | null;
+    if (skipLink) {
+      skipLink.addEventListener('focus', () => {
+        skipLink.style.left = '0';
+      });
+      skipLink.addEventListener('blur', () => {
+        skipLink.style.left = '-9999px';
+      });
+    }
   } catch (e) {
     reportError(e, 'init global handlers');
   }
@@ -434,6 +451,12 @@ window.onload = function () {
   waveLab.initWaveLabEvents();
   Store.load();
   setSoundPack(Store.state.settings.soundPack || 'mathRock');
+  // 听障视觉节拍模式：按存档设置初始化（WCAG 1.4.2 听觉替代）
+  try {
+    if (Store.state.settings.visualBeat) setVisualBeat(true);
+  } catch (e) {
+    reportError(e, 'visual-beat init');
+  }
   try {
     getAudioCtx();
   } catch (e) {
@@ -651,6 +674,7 @@ const handlers = {
   toggleScienceWhyPanel: toggleScienceWhyPanel,
   toggleSettingBgm: toggleSettingBgm,
   toggleSettingSfx: toggleSettingSfx,
+  toggleSettingVisualBeat: toggleSettingVisualBeat,
   tryStartBgOnce: tryStartBgOnce,
   useHint: useHint,
   // materiomusic
@@ -684,3 +708,13 @@ Object.assign(window as any, handlers);
 registerActions(handlers as any);
 // 带参数的 handler 需要 wrapper 跳过 Event 首参，放最后注册以覆盖上面的原始函数
 registerUiRenderActions();
+
+// 注册 Service Worker（PWA 离线缓存）。原本是 index.html 内联 <script>，
+// 为收紧 CSP（script-src 'self'）迁移至此。
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {
+      /* SW 注册失败不影响主流程 */
+    });
+  });
+}

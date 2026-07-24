@@ -36,10 +36,15 @@ import { SOUND_PACKS, SOUND_PACK_ORDER } from './sound-packs';
 import { getDailyChallenge } from './daily';
 import { renderEditor } from './level-editor';
 import { initEndlessMode, endEndlessMode } from './endless-mode';
-import { registerActions } from './events';
+import { registerActions, registerInputs } from './events';
 import { toggleSamplePlayback, importSampleToComposer } from './sample-library';
 import { openModal, closeModal, announce } from './a11y';
+import { mcToggleCell } from './composer/mini-composer';
+import { fmChangeBpm } from './free-mode';
+import { selectScienceType, goScienceStep, downloadScienceExport } from './science';
+import { setMasterVolume } from './audio';
 import { generateDailyRecommendations } from './learning-insights';
+import { setVisualBeat } from './visual-beat';
 
 export function showScreen(name: string) {
   playMenuSwipe();
@@ -880,8 +885,10 @@ export function renderSettings() {
   const spSel = document.getElementById('settingSoundPack');
   const volSlider = document.getElementById('masterVolumeSlider') as HTMLInputElement | null;
   const volVal = document.getElementById('masterVolumeVal');
+  const vbBtn = document.getElementById('settingVisualBeatBtn');
   if (bgmBtn) bgmBtn.textContent = Store.state.settings.bgm !== false ? '开启' : '关闭';
   if (sfxBtn) sfxBtn.textContent = Store.state.settings.sfx !== false ? '开启' : '关闭';
+  if (vbBtn) vbBtn.textContent = Store.state.settings.visualBeat ? '开启' : '关闭';
   if (diffSel) (diffSel as HTMLSelectElement).value = Store.state.settings.difficulty || 'auto';
   if (spSel) {
     const sel = spSel as HTMLSelectElement;
@@ -917,6 +924,15 @@ export function toggleSettingSfx(): void {
   const next = Store.state.settings.sfx !== false;
   Store.state.settings.sfx = !next;
   Store.save();
+  renderSettings();
+}
+
+export function toggleSettingVisualBeat(): void {
+  const next = !Store.state.settings.visualBeat;
+  Store.state.settings.visualBeat = next;
+  Store.save();
+  // 立即应用：开启/关闭视觉脉冲
+  setVisualBeat(next);
   renderSettings();
 }
 
@@ -1284,6 +1300,7 @@ Object.assign(window as any, {
   teacherLogin: teacherLogin,
   toggleSettingBgm: toggleSettingBgm,
   toggleSettingSfx: toggleSettingSfx,
+  toggleSettingVisualBeat: toggleSettingVisualBeat,
   updateDailyBanner: updateDailyBanner,
 });
 
@@ -1314,5 +1331,28 @@ export function registerUiRenderActions() {
     toggleSamplePlayback: (_e: Event, id: unknown) => toggleSamplePlayback(id as string),
     importSampleToComposer: (_e: Event, id: unknown) => importSampleToComposer(id as string),
     startLevel: (_e: Event, wid: unknown, lid: unknown) => startLevel(wid as number, lid as string),
+    // 带参数 handler 的 wrapper：跳过 Event 首参，避免参数错位
+    showScreen: (_e: Event, screen: unknown) => showScreen(screen as string),
+    closeBossProblem: (_e: Event, accept: unknown) => closeBossProblem(Boolean(accept)),
+    mcToggleCell: (_e: Event, ti: unknown, i: unknown) => mcToggleCell(ti as number, i as number),
+    fmChangeBpm: (_e: Event, d: unknown) => fmChangeBpm(d as number),
+    selectScienceType: (_e: Event, type: unknown) => selectScienceType(type as string),
+    goScienceStep: (_e: Event, step: unknown) => goScienceStep(step as string),
+    downloadScienceExport: (_e: Event, fmt: unknown) => downloadScienceExport(fmt as 'midi' | 'json' | 'csv'),
+  });
+  // data-input 处理器：change/input 事件，从元素 value 取参
+  registerInputs({
+    setMasterVolume: (e: Event) => {
+      const el = e.target as HTMLInputElement;
+      setMasterVolume(Number(el.value) / 100);
+    },
+    changeSoundPack: (e: Event) => {
+      const el = e.target as HTMLSelectElement;
+      changeSoundPack(el.value);
+    },
+    changeDifficulty: (e: Event) => {
+      const el = e.target as HTMLSelectElement;
+      changeDifficulty(el.value);
+    },
   });
 }

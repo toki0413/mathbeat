@@ -13,13 +13,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="MathBeat" />
     <link rel="apple-touch-icon" href="icons/256x256.png" />
-    <!-- 安全：CSP 限制 script/style/img/media 来源，禁用外部域与 frame 嵌入。
-         注意：当前过渡阶段允许 'unsafe-inline' 脚本，因为 index.html 中仍有
-         30+ 个 inline onclick 待迁移到 data-action 委托。
-         迁移完成后应改为 script-src 'self' 严格策略。 -->
+    <!-- 安全：CSP 严格策略。
+         所有 inline onclick/onload/onfocus 已迁移到 data-action 委托或
+         addEventListener，script-src 收紧为 'self'。
+         style-src 仍需 'unsafe-inline'（动态样式注入），未来可改用 nonce。
+         frame-ancestors / report-uri 无法通过 <meta> 下发，部署时由
+         Web 服务器响应头补全。 -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' data: blob:; font-src 'self' data:; base-uri 'self'; form-action 'self'; object-src 'none';"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' data: blob:; font-src 'self' data:; base-uri 'self'; form-action 'self'; object-src 'none';"
     />
     <!-- 注意：frame-ancestors / report-uri 等 CSP 指令无法通过 <meta> 生效，
          必须由服务端响应头下发；此处留空，部署时在 Web 服务器配置
@@ -3492,21 +3494,13 @@
   </head>
   <body>
     <!-- a11y: 跳过导航直达主内容（WCAG 2.4.1） -->
-    <a href="#homeScreen" class="skip-link" style="position:absolute;left:-9999px;top:0;z-index:99999;background:#000;color:#fff;padding:8px 16px;border-radius:0 0 8px 0;text-decoration:none" onfocus="this.style.left='0'" onblur="this.style.left='-9999px'">跳到主内容</a>
+    <a href="#homeScreen" class="skip-link" style="position:absolute;left:-9999px;top:0;z-index:99999;background:#000;color:#fff;padding:8px 16px;border-radius:0 0 8px 0;text-decoration:none">跳到主内容</a>
     <div id="loadingScreen">
       <div class="loading-title">数律</div>
       <div class="loading-sub">MATHBEAT</div>
       <div class="loading-bar-wrap"><div class="loading-bar" id="loadingBar"></div></div>
       <div class="loading-text" id="loadingText">加载中...</div>
     </div>
-    <script>
-      if (location.protocol === 'file:') {
-        const txt = document.getElementById('loadingText');
-        if (txt)
-          txt.innerHTML =
-            '正在本地运行... <span style="font-size:12px">部分功能（PWA离线、MIDI导出）可能需要服务器环境</span>';
-      }
-    </script>
     <canvas id="particleCanvas"></canvas>
     <div id="hitFlashOverlay" style="position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity 90ms ease-out;z-index:9999"></div>
 
@@ -3538,7 +3532,7 @@
       </div>
       <div
         class="daily-challenge"
-        onclick="openTeacher()"
+        data-action="openTeacher"
         style="display: none; background: linear-gradient(135deg, #7c6bff, #a78bfa); color: #fff; margin-bottom: 10px"
       >
         <div class="daily-left">
@@ -3554,7 +3548,7 @@
         <span class="weekend-xp-icon">⚡</span>
         <span class="weekend-xp-text">周末双倍 XP 活动进行中！所有得分 ×2</span>
       </div>
-      <div id="dailyChallengeBanner" class="daily-challenge" onclick="startDailyChallenge()">
+      <div id="dailyChallengeBanner" class="daily-challenge" data-action="startDailyChallenge">
         <div class="daily-left">
           <div class="daily-icon">📅</div>
           <div>
@@ -3592,19 +3586,19 @@
         </div>
       </div>
       <div class="home-actions">
-        <div class="action-card action-concept" onclick="openConceptMap()">
+        <div class="action-card action-concept" data-action="openConceptMap">
           <div class="action-top"><span class="action-icon">🕸️</span><span>概念互联</span></div>
           <div class="action-name">数学概念图谱</div>
           <div class="action-sub">可视化 8 个数学概念之间的联系</div>
         </div>
-        <div class="action-card action-science" onclick="openScienceMode()">
+        <div class="action-card action-science" data-action="openScienceMode">
           <div class="action-top">
             <span class="action-icon">🔬</span><span data-i18n="home.science_mode">独立模式</span>
           </div>
           <div class="action-name" data-i18n="home.science">科学之声</div>
           <div class="action-sub">把DFT/MD/FEM/CFD数据变成音乐</div>
         </div>
-        <div class="action-card action-free" id="freeModeCard" onclick="openFreeMode()">
+        <div class="action-card action-free" id="freeModeCard" data-action="openFreeMode">
           <div class="action-top">
             <span class="action-icon">🎮</span><span data-i18n="home.freemode_label">自由创作</span>
           </div>
@@ -3614,7 +3608,7 @@
         </div>
         <div
           class="action-card"
-          onclick="openAchievements()"
+          data-action="openAchievements"
           style="background: linear-gradient(135deg, #ffd166, #ffe5a0); color: #fff"
         >
           <div class="action-top"><span class="action-icon">🏆</span><span data-i18n="home.ach_label">成就</span></div>
@@ -3623,7 +3617,7 @@
         </div>
         <div
           class="action-card"
-          onclick="openSettings()"
+          data-action="openSettings"
           style="background: linear-gradient(135deg, #8e8ea0, #b5b5c8); color: #fff"
         >
           <div class="action-top"><span class="action-icon">⚙️</span><span>设置</span></div>
@@ -3632,7 +3626,7 @@
         </div>
         <div
           class="action-card"
-          onclick="openEndlessMode()"
+          data-action="openEndlessMode"
           style="background: linear-gradient(135deg, #ff6b6b, #ffa07a); color: #fff"
         >
           <div class="action-top"><span class="action-icon">♾️</span><span>无尽模式</span></div>
@@ -3641,7 +3635,7 @@
         </div>
         <div
           class="action-card"
-          onclick="openLevelEditor()"
+          data-action="openLevelEditor"
           style="background: linear-gradient(135deg, #5dade2, #85c1e9); color: #fff"
         >
           <div class="action-top"><span class="action-icon">🎨</span><span>关卡编辑器</span></div>
@@ -3658,7 +3652,7 @@
         <div
           id="composerHomeCard"
           class="action-card action-composer"
-          onclick="openComposerHome()"
+          data-action="openComposerHome"
           style="margin-top: 6px"
         >
           <div class="action-top">
@@ -3673,7 +3667,7 @@
         <div class="home-bottom-label" data-i18n="home.samples">数学摇滚示例曲库</div>
         <div
           class="action-card"
-          onclick="openSampleLibrary()"
+          data-action="openSampleLibrary"
           style="background: linear-gradient(135deg, #9b5de5, #c77dff); color: #fff; margin-top: 6px"
         >
           <div class="action-top">
@@ -3689,7 +3683,7 @@
 
     <div id="levelScreen" class="screen">
       <div class="level-screen-header">
-        <span class="back-btn" onclick="showScreen('home')">←</span>
+        <span class="back-btn" data-action="showScreen" data-args='["home"]'>←</span>
         <div>
           <div class="level-screen-title" id="levelScreenTitle"></div>
           <div class="level-screen-sub" id="levelScreenSub"></div>
@@ -3705,14 +3699,14 @@
     <div id="gameScreen" class="screen">
       <div class="game-header">
         <div class="game-header-left">
-          <span class="game-back" onclick="exitGame()">←</span><span class="game-level-pill" id="gameLevelPill"></span>
+          <span class="game-back" data-action="exitGame">←</span><span class="game-level-pill" id="gameLevelPill"></span>
         </div>
         <div class="game-header-right">
           <span class="combo-badge" id="comboBadge"></span
-          ><button class="why-btn" onclick="restartLevel()">⟲ 重开</button
-          ><button class="why-btn" id="gamePauseBtn" onclick="toggleGamePause()">⏸ 暂停</button
-          ><button class="why-btn" onclick="useHint()">💡 提示</button
-          ><button class="why-btn" onclick="showWhy()">为什么？</button>
+          ><button class="why-btn" data-action="restartLevel">⟲ 重开</button
+          ><button class="why-btn" id="gamePauseBtn" data-action="toggleGamePause">⏸ 暂停</button
+          ><button class="why-btn" data-action="useHint">💡 提示</button
+          ><button class="why-btn" data-action="showWhy">为什么？</button>
         </div>
       </div>
       <div id="gameContent"></div>
@@ -3721,14 +3715,14 @@
     <div id="scienceScreen" class="screen">
       <div class="science-header">
         <div style="display: flex; align-items: center; gap: 10px">
-          <span class="back-btn" onclick="closeScienceMode()">←</span><span class="science-title">🔬 科学之声</span>
+          <span class="back-btn" data-action="closeScienceMode">←</span><span class="science-title">🔬 科学之声</span>
         </div>
-        <button class="share-btn" onclick="shareScience()">分享</button>
+        <button class="share-btn" data-action="shareScience">分享</button>
       </div>
       <div class="science-step-tabs" id="scienceStepTabs">
-        <div class="science-step-tab active" data-step="mode" onclick="goScienceStep('mode')">选择类型</div>
-        <div class="science-step-tab" data-step="data" onclick="goScienceStep('data')">数据导入</div>
-        <div class="science-step-tab" data-step="compose" onclick="goScienceStep('compose')">映射作曲</div>
+        <div class="science-step-tab active" data-step="mode" data-action="goScienceStep" data-args='["mode"]'>选择类型</div>
+        <div class="science-step-tab" data-step="data" data-action="goScienceStep" data-args='["data"]'>数据导入</div>
+        <div class="science-step-tab" data-step="compose" data-action="goScienceStep" data-args='["compose"]'>映射作曲</div>
       </div>
       <div class="science-body">
         <div id="scienceStep-mode" class="science-section active">
@@ -3736,87 +3730,87 @@
             <div class="science-card-title">选择科学模拟类型</div>
             <div class="science-intro">科学之声把计算科学数据映射为音乐。选择一种数据类型开始探索。</div>
             <div class="science-mode-grid">
-              <div class="science-mode-card" onclick="selectScienceType('dft')">
+              <div class="science-mode-card" data-action="selectScienceType" data-args='["dft"]'>
                 <div class="science-mode-emoji">⚛️</div>
                 <div class="science-mode-name">DFT 密度泛函</div>
                 <div class="science-mode-sub">从电子结构到音乐</div>
               </div>
-              <div class="science-mode-card" onclick="selectScienceType('md')">
+              <div class="science-mode-card" data-action="selectScienceType" data-args='["md"]'>
                 <div class="science-mode-emoji">🔬</div>
                 <div class="science-mode-name">MD 分子动力学</div>
                 <div class="science-mode-sub">从原子运动到节奏</div>
               </div>
-              <div class="science-mode-card" onclick="selectScienceType('fem')">
+              <div class="science-mode-card" data-action="selectScienceType" data-args='["fem"]'>
                 <div class="science-mode-emoji">🏗️</div>
                 <div class="science-mode-name">FEM 有限元</div>
                 <div class="science-mode-sub">从应力场到和声</div>
               </div>
-              <div class="science-mode-card" onclick="selectScienceType('cfd')">
+              <div class="science-mode-card" data-action="selectScienceType" data-args='["cfd"]'>
                 <div class="science-mode-emoji">🌊</div>
                 <div class="science-mode-name">CFD 计算流体力学</div>
                 <div class="science-mode-sub">从流场到织体</div>
               </div>
-              <div class="science-mode-card" onclick="selectScienceType('xrd')">
+              <div class="science-mode-card" data-action="selectScienceType" data-args='["xrd"]'>
                 <div class="science-mode-emoji">💎</div>
                 <div class="science-mode-name">XRD 晶体衍射</div>
                 <div class="science-mode-sub">从衍射峰到旋律</div>
               </div>
-              <div class="science-mode-card" onclick="selectScienceType('dna')">
+              <div class="science-mode-card" data-action="selectScienceType" data-args='["dna"]'>
                 <div class="science-mode-emoji">🧬</div>
                 <div class="science-mode-name">DNA 序列</div>
                 <div class="science-mode-sub">从碱基到音符</div>
               </div>
-              <div class="science-mode-card" onclick="selectScienceType('pulsar')">
+              <div class="science-mode-card" data-action="selectScienceType" data-args='["pulsar"]'>
                 <div class="science-mode-emoji">🌟</div>
                 <div class="science-mode-name">脉冲星/天文</div>
                 <div class="science-mode-sub">从周期到BPM</div>
               </div>
-              <div class="science-mode-card" onclick="openScaleLab()">
+              <div class="science-mode-card" data-action="openScaleLab">
                 <div class="science-mode-emoji">🎵</div>
                 <div class="science-mode-name">音阶实验室</div>
                 <div class="science-mode-sub">2^12音阶·Hall-Petch</div>
               </div>
-              <div class="science-mode-card" onclick="openProteinMode()">
+              <div class="science-mode-card" data-action="openProteinMode">
                 <div class="science-mode-emoji">🧬</div>
                 <div class="science-mode-name">蛋白质声化</div>
                 <div class="science-mode-sub">序列↔音乐双向映射</div>
               </div>
-              <div class="science-mode-card" onclick="openWebMode()">
+              <div class="science-mode-card" data-action="openWebMode">
                 <div class="science-mode-emoji">🕸️</div>
                 <div class="science-mode-name">蜘蛛网声化</div>
                 <div class="science-mode-sub">图结构→乐器</div>
               </div>
-              <div class="science-mode-card" onclick="openWaveLab()">
+              <div class="science-mode-card" data-action="openWaveLab">
                 <div class="science-mode-emoji">〰️</div>
                 <div class="science-mode-name">谐波实验室</div>
                 <div class="science-mode-sub">傅里叶级数·加法合成</div>
               </div>
-              <div class="science-mode-card" onclick="selectScienceType('crystal')">
+              <div class="science-mode-card" data-action="selectScienceType" data-args='["crystal"]'>
                 <div class="science-mode-emoji">💎</div>
                 <div class="science-mode-name">晶体点阵</div>
                 <div class="science-mode-sub">布拉维格子↔音阶</div>
               </div>
-              <div class="science-mode-card" onclick="selectScienceType('quantum')">
+              <div class="science-mode-card" data-action="selectScienceType" data-args='["quantum"]'>
                 <div class="science-mode-emoji">⚛️</div>
                 <div class="science-mode-name">量子波函数</div>
                 <div class="science-mode-sub">本征态↔泛音列</div>
               </div>
-              <div class="science-mode-card" onclick="selectScienceType('seismic')">
+              <div class="science-mode-card" data-action="selectScienceType" data-args='["seismic"]'>
                 <div class="science-mode-emoji">🌋</div>
                 <div class="science-mode-name">地震波</div>
                 <div class="science-mode-sub">P/S波↔节奏</div>
               </div>
-              <div class="science-mode-card" onclick="selectScienceType('eeg')">
+              <div class="science-mode-card" data-action="selectScienceType" data-args='["eeg"]'>
                 <div class="science-mode-emoji">🧠</div>
                 <div class="science-mode-name">脑电波</div>
                 <div class="science-mode-sub">δθαβγ↔五声部</div>
               </div>
-              <div class="science-mode-card" onclick="openFractureMode()">
+              <div class="science-mode-card" data-action="openFractureMode">
                 <div class="science-mode-emoji">⚡</div>
                 <div class="science-mode-name">断裂声化</div>
                 <div class="science-mode-sub">应力场→音符(论文§6.1)</div>
               </div>
-              <div class="science-mode-card" onclick="openFlameMode()">
+              <div class="science-mode-card" data-action="openFlameMode">
                 <div class="science-mode-emoji">🔥</div>
                 <div class="science-mode-name">火焰动力学</div>
                 <div class="science-mode-sub">流体热力→节奏(论文Fig1C)</div>
@@ -3832,26 +3826,26 @@
           <div class="science-card">
             <div class="science-card-title">数据导入 · <span id="scienceTypeName">DFT</span></div>
             <div class="science-type-row">
-              <div class="science-type-btn active" data-type="dft" onclick="selectScienceType('dft')">DFT</div>
-              <div class="science-type-btn" data-type="md" onclick="selectScienceType('md')">MD</div>
-              <div class="science-type-btn" data-type="fem" onclick="selectScienceType('fem')">FEM</div>
-              <div class="science-type-btn" data-type="cfd" onclick="selectScienceType('cfd')">CFD</div>
-              <div class="science-type-btn" data-type="xrd" onclick="selectScienceType('xrd')">XRD</div>
-              <div class="science-type-btn" data-type="dna" onclick="selectScienceType('dna')">DNA</div>
-              <div class="science-type-btn" data-type="pulsar" onclick="selectScienceType('pulsar')">Pulsar</div>
-              <div class="science-type-btn" data-type="crystal" onclick="selectScienceType('crystal')">Crystal</div>
-              <div class="science-type-btn" data-type="quantum" onclick="selectScienceType('quantum')">Quantum</div>
-              <div class="science-type-btn" data-type="seismic" onclick="selectScienceType('seismic')">Seismic</div>
-              <div class="science-type-btn" data-type="eeg" onclick="selectScienceType('eeg')">EEG</div>
+              <div class="science-type-btn active" data-type="dft" data-action="selectScienceType" data-args='["dft"]'>DFT</div>
+              <div class="science-type-btn" data-type="md" data-action="selectScienceType" data-args='["md"]'>MD</div>
+              <div class="science-type-btn" data-type="fem" data-action="selectScienceType" data-args='["fem"]'>FEM</div>
+              <div class="science-type-btn" data-type="cfd" data-action="selectScienceType" data-args='["cfd"]'>CFD</div>
+              <div class="science-type-btn" data-type="xrd" data-action="selectScienceType" data-args='["xrd"]'>XRD</div>
+              <div class="science-type-btn" data-type="dna" data-action="selectScienceType" data-args='["dna"]'>DNA</div>
+              <div class="science-type-btn" data-type="pulsar" data-action="selectScienceType" data-args='["pulsar"]'>Pulsar</div>
+              <div class="science-type-btn" data-type="crystal" data-action="selectScienceType" data-args='["crystal"]'>Crystal</div>
+              <div class="science-type-btn" data-type="quantum" data-action="selectScienceType" data-args='["quantum"]'>Quantum</div>
+              <div class="science-type-btn" data-type="seismic" data-action="selectScienceType" data-args='["seismic"]'>Seismic</div>
+              <div class="science-type-btn" data-type="eeg" data-action="selectScienceType" data-args='["eeg"]'>EEG</div>
             </div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px">
-              <button class="science-btn secondary" onclick="loadScienceSample()">使用示例数据</button>
+              <button class="science-btn secondary" data-action="loadScienceSample">使用示例数据</button>
               <div class="science-file-wrap science-btn secondary">
                 <span>上传你的数据文件</span
                 ><input
                   type="file"
                   accept=".json,.csv,.txt,.out,.outcar,.lammpstrj,.log,.mph"
-                  onchange="handleScienceFile(this)"
+                  data-input="handleScienceFile"
                 />
               </div>
             </div>
@@ -3865,7 +3859,7 @@
             <div class="science-stats" id="scienceStats"></div>
           </div>
           <div class="science-card">
-            <button class="science-open-composer" onclick="goScienceStep('compose')">下一步：映射与作曲 →</button>
+            <button class="science-open-composer" data-action="goScienceStep" data-args='["compose"]'>下一步：映射与作曲 →</button>
           </div>
         </div>
         <div id="scienceStep-compose" class="science-section">
@@ -3878,7 +3872,7 @@
           <div class="science-card">
             <div class="science-card-title">Math-Music 深度映射</div>
             <div id="scienceMappingList"></div>
-            <button class="science-btn secondary" style="margin-top: 8px" onclick="toggleScienceWhyPanel()">
+            <button class="science-btn secondary" style="margin-top: 8px" data-action="toggleScienceWhyPanel">
               为什么？
             </button>
             <div class="science-why-panel" id="scienceWhyPanel" style="display: none"></div>
@@ -3887,15 +3881,15 @@
             <div class="science-card-title">映射参数</div>
             <div id="scienceKnobs"></div>
             <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap">
-              <button class="science-btn" id="sciGenerateBtn" onclick="regenerateScienceMusic()">生成音乐</button>
-              <button class="science-btn" id="sciPlayBtn" onclick="toggleSciencePlay()">▶ 播放</button>
-              <button class="science-btn secondary" onclick="saveScienceComposition()">保存作品</button>
-              <button class="science-open-composer" onclick="openComposerWithScience()">导出到作曲台</button>
+              <button class="science-btn" id="sciGenerateBtn" data-action="regenerateScienceMusic">生成音乐</button>
+              <button class="science-btn" id="sciPlayBtn" data-action="toggleSciencePlay">▶ 播放</button>
+              <button class="science-btn secondary" data-action="saveScienceComposition">保存作品</button>
+              <button class="science-open-composer" data-action="openComposerWithScience">导出到作曲台</button>
             </div>
             <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap">
-              <button class="science-btn secondary" onclick="downloadScienceExport('midi')">导出 MIDI</button>
-              <button class="science-btn secondary" onclick="downloadScienceExport('json')">导出 JSON</button>
-              <button class="science-btn secondary" onclick="downloadScienceExport('csv')">导出 CSV</button>
+              <button class="science-btn secondary" data-action="downloadScienceExport" data-args='["midi"]'>导出 MIDI</button>
+              <button class="science-btn secondary" data-action="downloadScienceExport" data-args='["json"]'>导出 JSON</button>
+              <button class="science-btn secondary" data-action="downloadScienceExport" data-args='["csv"]'>导出 CSV</button>
             </div>
           </div>
           <div class="science-card">
@@ -3911,7 +3905,7 @@
     <div class="mini-composer" id="miniComposer">
       <div class="mc-header">
         <span class="mc-title" id="mcTitle">👑 终极作曲</span
-        ><button class="ctrl-btn" onclick="exitMiniComposer()">✕</button>
+        ><button class="ctrl-btn" data-action="exitMiniComposer">✕</button>
       </div>
       <div class="mc-goal" id="mcGoal">
         <div id="mcGoalText"></div>
@@ -3919,27 +3913,27 @@
       </div>
       <div class="mc-tracks" id="mcTracks"></div>
       <div class="mc-footer">
-        <button class="mc-btn" style="background: var(--trackA); color: #fff" onclick="mcTogglePlay()">▶</button
-        ><button class="mc-btn" style="background: rgba(0, 0, 0, 0.06)" onclick="mcReset()">⟲</button
-        ><button class="mc-btn" style="background: var(--w6); color: #fff" onclick="mcApplyGen()">📏 生成</button
-        ><button class="mc-btn" style="background: var(--success); color: #fff" onclick="mcFinish()">提交验证</button>
+        <button class="mc-btn" style="background: var(--trackA); color: #fff" data-action="mcTogglePlay">▶</button
+        ><button class="mc-btn" style="background: rgba(0, 0, 0, 0.06)" data-action="mcReset">⟲</button
+        ><button class="mc-btn" style="background: var(--w6); color: #fff" data-action="mcApplyGen">📏 生成</button
+        ><button class="mc-btn" style="background: var(--success); color: #fff" data-action="mcFinish">提交验证</button>
       </div>
     </div>
 
     <div id="freeModeScreen" class="screen">
       <div class="free-header">
-        <span>🎮 自由模式</span><button class="ctrl-btn" onclick="closeFreeMode()">✕</button>
+        <span>🎮 自由模式</span><button class="ctrl-btn" data-action="closeFreeMode">✕</button>
       </div>
       <div class="free-body">
         <div class="challenge-card">
           <div class="challenge-q">轻量即兴创作间：4 轨 × 16 步，随意编排，无通关条件。</div>
           <div id="freeTracks"></div>
           <div class="controls-bar" style="margin-top: 12px">
-            <button class="ctrl-btn" onclick="fmReset()">⟲</button
-            ><button class="ctrl-btn play-btn" id="fmPlayBtn" onclick="fmTogglePlay()">▶</button>
+            <button class="ctrl-btn" data-action="fmReset">⟲</button
+            ><button class="ctrl-btn play-btn" id="fmPlayBtn" data-action="fmTogglePlay">▶</button>
             <div class="bpm-group"><span class="bpm-val" id="fmBpm">120</span><span>BPM</span></div>
-            <button class="ctrl-btn speed-btn" onclick="fmChangeBpm(-10)">-</button
-            ><button class="ctrl-btn speed-btn" onclick="fmChangeBpm(10)">+</button>
+            <button class="ctrl-btn speed-btn" data-action="fmChangeBpm" data-args='[-10]'>-</button
+            ><button class="ctrl-btn speed-btn" data-action="fmChangeBpm" data-args='[10]'>+</button>
           </div>
           <div style="margin-top: 12px; font-size: 13px; font-weight: 600; color: var(--dim)">
             需要导出 / 多轨 / 数学生成器？
@@ -3947,7 +3941,7 @@
           <button
             class="verify-btn"
             style="margin-top: 8px; background: var(--w3); width: 100%"
-            onclick="openComposerHome()"
+            data-action="openComposerHome"
           >
             打开完整作曲台 →
           </button>
@@ -3959,45 +3953,45 @@
       <div class="overlay-card">
         <div class="overlay-title" id="whyTitle">为什么？</div>
         <div class="overlay-text" id="whyText"></div>
-        <button class="overlay-close" onclick="closeWhy()">明白了</button>
+        <button class="overlay-close" data-action="closeWhy">明白了</button>
       </div>
     </div>
-    <div id="tutorialOverlay" onclick="if (event.target === this) closeTutorial();">
+    <div id="tutorialOverlay" data-action="closeTutorial" data-self-only="true">
       <div class="overlay-card">
         <div class="overlay-title" id="tutTitle">教程</div>
         <div class="overlay-text" id="tutText"></div>
         <div id="tutStep" style="font-size: 12px; color: var(--dim); margin-top: 6px"></div>
-        <button class="overlay-close" id="tutNext" onclick="closeTutorial()">知道了</button>
+        <button class="overlay-close" id="tutNext" data-action="closeTutorial">知道了</button>
       </div>
     </div>
-    <div id="eduCardOverlay" onclick="if (event.target === this) closeEduCard();">
+    <div id="eduCardOverlay" data-action="closeEduCard" data-self-only="true">
       <div class="overlay-card">
         <div class="overlay-title" id="eduTitle">知识卡片</div>
         <div class="edu-concept" id="eduConcept"></div>
         <div class="overlay-text" id="eduText"></div>
         <div class="edu-practice" id="eduPractice"></div>
-        <button class="overlay-close" onclick="closeEduCard()">继续</button>
+        <button class="overlay-close" data-action="closeEduCard">继续</button>
       </div>
     </div>
     <div id="diaryOverlay">
       <div class="overlay-card">
         <div class="overlay-title">数学日记</div>
         <div id="diaryEntries"></div>
-        <button class="overlay-close" onclick="closeDiary()">关闭</button>
+        <button class="overlay-close" data-action="closeDiary">关闭</button>
       </div>
     </div>
     <div id="kgOverlay">
       <div class="overlay-card">
         <div class="overlay-title">知识图谱</div>
         <canvas id="kgCanvas" width="380" height="380"></canvas
-        ><button class="overlay-close" onclick="closeKG()">关闭</button>
+        ><button class="overlay-close" data-action="closeKG">关闭</button>
       </div>
     </div>
     <div id="teacherOverlay">
       <div class="overlay-card">
         <div class="overlay-title">教师面板</div>
         <div class="teacher-login" id="teacherLogin">
-          <input type="password" id="teacherPwd" placeholder="输入教师密码" /><button onclick="teacherLogin()">
+          <input type="password" id="teacherPwd" placeholder="输入教师密码" /><button data-action="teacherLogin">
             登录
           </button>
         </div>
@@ -4005,9 +3999,9 @@
           <div id="teacherStats"></div>
           <div class="heatmap-grid" id="heatmapGrid"></div>
           <div class="bar-chart" id="barChart"></div>
-          <button class="export-btn" onclick="exportData()">导出数据</button>
+          <button class="export-btn" data-action="exportData">导出数据</button>
         </div>
-        <button class="overlay-close" onclick="closeTeacher()">关闭</button>
+        <button class="overlay-close" data-action="closeTeacher">关闭</button>
       </div>
     </div>
     <div id="worldIntroOverlay">
@@ -4015,10 +4009,10 @@
         <div class="overlay-title" id="worldIntroTitle">世界介绍</div>
         <div id="worldIntroVisual" style="margin: 10px 0"></div>
         <div class="overlay-text" id="worldIntroText"></div>
-        <button class="overlay-close" onclick="closeWorldIntro()">进入世界</button>
+        <button class="overlay-close" data-action="closeWorldIntro">进入世界</button>
       </div>
     </div>
-    <div id="conceptMapOverlay" onclick="if (event.target === this) closeConceptMap();">
+    <div id="conceptMapOverlay" data-action="closeConceptMap" data-self-only="true">
       <div class="overlay-card">
         <div class="overlay-title">🕸️ 概念互联图谱</div>
         <div class="overlay-text">
@@ -4026,7 +4020,7 @@
         </div>
         <div id="conceptMapContainer" class="concept-map-wrap"></div>
         <div id="conceptMapDetail" class="concept-detail" style="display: none"></div>
-        <button class="overlay-close" onclick="closeConceptMap()" style="margin-top: 12px">关闭</button>
+        <button class="overlay-close" data-action="closeConceptMap" style="margin-top: 12px">关闭</button>
       </div>
     </div>
     <div id="bossProblemOverlay">
@@ -4037,10 +4031,11 @@
         <div class="boss-problem-statement" id="bossProblemMath"></div>
         <div class="boss-problem-hint" id="bossProblemHint"></div>
         <div class="boss-reward" id="bossProblemReward"></div>
-        <button class="overlay-close" onclick="closeBossProblem(true)" style="margin-top: 12px">接受挑战</button
+        <button class="overlay-close" data-action="closeBossProblem" data-args='[true]' style="margin-top: 12px">接受挑战</button
         ><button
           class="overlay-close"
-          onclick="closeBossProblem(false)"
+          data-action="closeBossProblem"
+          data-args='[false]'
           style="margin-top: 8px; background: var(--dim)"
         >
           稍后
@@ -4055,11 +4050,11 @@
         <div class="ach-desc" id="achPopupDesc"></div>
       </div>
     </div>
-    <button class="bg-music-btn" id="bgMusicBtn" onclick="toggleBgMusic()">🔊</button>
+    <button class="bg-music-btn" id="bgMusicBtn" data-action="toggleBgMusic">🔊</button>
     <button
       class="bg-music-btn"
       id="langBtn"
-      onclick="toggleLang()"
+      data-action="toggleLang"
       style="bottom: 80px; font-size: 14px; font-weight: 700"
     >
       EN
@@ -4139,7 +4134,7 @@
       >
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px">
           <div style="font-size: 22px; font-weight: 800">🎸 数学摇滚示例曲库</div>
-          <button class="ctrl-btn" onclick="closeSampleLibrary()">✕</button>
+          <button class="ctrl-btn" data-action="closeSampleLibrary">✕</button>
         </div>
         <div id="sampleLibraryList" style="display: flex; flex-direction: column; gap: 12px"></div>
       </div>
@@ -4184,7 +4179,7 @@
         <div style="display: flex; justify-content: space-between; margin-top: 12px">
           <button
             class="back-btn"
-            onclick="closeDailyModal()"
+            data-action="closeDailyModal"
             style="
               position: static;
               background: var(--dim);
@@ -4200,7 +4195,7 @@
           </button>
           <button
             class="back-btn"
-            onclick="showDailyWhy()"
+            data-action="showDailyWhy"
             style="
               position: static;
               background: var(--science);
@@ -4362,7 +4357,7 @@
 
     <div id="achievementsScreen" class="screen">
       <div class="ach-header">
-        <span class="back-btn" onclick="closeAchievements()">←</span>
+        <span class="back-btn" data-action="closeAchievements">←</span>
         <div style="font-size: 20px; font-weight: 800">🏆 成就图鉴</div>
         <span></span>
       </div>
@@ -4371,7 +4366,7 @@
 
     <div id="settingsScreen" class="screen">
       <div class="ach-header">
-        <span class="back-btn" onclick="closeSettings()">←</span>
+        <span class="back-btn" data-action="closeSettings">←</span>
         <div style="font-size: 20px; font-weight: 800">⚙️ 设置</div>
         <span></span>
       </div>
@@ -4380,26 +4375,30 @@
           <div style="font-size: 16px; font-weight: 800; margin-bottom: 10px">音频</div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0">
             <span style="font-size: 14px; font-weight: 700">背景音乐</span>
-            <button class="ctrl-btn" id="settingBgmBtn" onclick="toggleSettingBgm()">开启</button>
+            <button class="ctrl-btn" id="settingBgmBtn" data-action="toggleSettingBgm">开启</button>
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0">
             <span style="font-size: 14px; font-weight: 700">音效</span>
-            <button class="ctrl-btn" id="settingSfxBtn" onclick="toggleSettingSfx()">开启</button>
+            <button class="ctrl-btn" id="settingSfxBtn" data-action="toggleSettingSfx">开启</button>
           </div>
           <div style="margin: 10px 0">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px">
               <span style="font-size: 14px; font-weight: 700">主音量</span>
               <span id="masterVolumeVal" style="font-size: 13px; font-weight: 700; color: var(--dim)">80%</span>
             </div>
-            <input type="range" id="masterVolumeSlider" min="0" max="100" value="80" style="width: 100%" oninput="setMasterVolume(this.value / 100)">
+            <input type="range" id="masterVolumeSlider" min="0" max="100" value="80" style="width: 100%" data-input="setMasterVolume">
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0">
             <span style="font-size: 14px; font-weight: 700">音色包</span>
             <select
               id="settingSoundPack"
-              onchange="changeSoundPack(this.value)"
+              data-input="changeSoundPack"
               style="font-size: 14px; font-weight: 700; padding: 4px 8px; border-radius: 8px; border: 2px solid #e8e4de"
             ></select>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0">
+            <span style="font-size: 14px; font-weight: 700">视觉节拍（听障辅助）</span>
+            <button class="ctrl-btn" id="settingVisualBeatBtn" data-action="toggleSettingVisualBeat">关闭</button>
           </div>
         </div>
         <div class="challenge-card" style="margin-bottom: 12px">
@@ -4408,7 +4407,7 @@
             <span style="font-size: 14px; font-weight: 700">难度</span>
             <select
               id="settingDifficulty"
-              onchange="changeDifficulty(this.value)"
+              data-input="changeDifficulty"
               style="font-size: 14px; font-weight: 700; padding: 4px 8px; border-radius: 8px; border: 2px solid #e8e4de"
             >
               <option value="easy">简单</option>
@@ -4419,17 +4418,17 @@
         </div>
         <div class="challenge-card" style="margin-bottom: 12px">
           <div style="font-size: 16px; font-weight: 800; margin-bottom: 10px">数据</div>
-          <button class="verify-btn" style="width: 100%; margin-bottom: 8px" onclick="exportGameData()">
+          <button class="verify-btn" style="width: 100%; margin-bottom: 8px" data-action="exportGameData">
             📤 导出存档
           </button>
           <button
             class="verify-btn"
             style="width: 100%; margin-bottom: 8px; background: var(--w3)"
-            onclick="importGameData()"
+            data-action="importGameData"
           >
             📥 导入存档
           </button>
-          <button class="ctrl-btn" style="width: 100%; background: var(--error); color: #fff" onclick="resetGameData()">
+          <button class="ctrl-btn" style="width: 100%; background: var(--error); color: #fff" data-action="resetGameData">
             ⚠️ 重置所有进度
           </button>
         </div>
@@ -4442,15 +4441,9 @@
       </div>
     </div>
 
-    <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').catch(function () {});
-      }
-    </script>
-
     <div id="endlessModeScreen" class="screen">
       <div class="ach-header">
-        <span class="back-btn" onclick="closeEndlessMode()">←</span>
+        <span class="back-btn" data-action="closeEndlessMode">←</span>
         <div style="font-size: 20px; font-weight: 800">♾️ 无尽模式</div>
         <span></span>
       </div>
@@ -4459,7 +4452,7 @@
 
     <div id="levelEditorScreen" class="screen">
       <div class="ach-header">
-        <span class="back-btn" onclick="closeLevelEditor()">←</span>
+        <span class="back-btn" data-action="closeLevelEditor">←</span>
         <div style="font-size: 20px; font-weight: 800">🎨 关卡编辑器</div>
         <span></span>
       </div>

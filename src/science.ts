@@ -676,8 +676,10 @@ export function showScienceUploadStatus(msg: string, type: string) {
     }, 4000);
   }
 }
-export function handleScienceFile(input: HTMLInputElement) {
-  const f = input.files![0];
+export function handleScienceFile(input: HTMLInputElement | Event) {
+  const el = input instanceof HTMLInputElement ? input : ((input as Event).target as HTMLInputElement);
+  if (!el || !el.files) return;
+  const f = el.files[0];
   if (!f) return;
   const ext = (f.name.split('.').pop() || '').toLowerCase();
   const LARGE_FILE_THRESHOLD = 2 * 1024 * 1024;

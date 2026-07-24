@@ -124,11 +124,11 @@ export function mcRenderTracks() {
             (c: number, i: number) =>
               '<div class="mc-cell ' +
               (c ? 'on ' + t.color : '') +
-              '" onclick="mcToggleCell(' +
+              '" data-action="mcToggleCell" data-args=\'[' +
               ti +
               ',' +
               i +
-              ')"></div>'
+              ']\'></div>'
           )
           .join('') +
         '</div></div>'

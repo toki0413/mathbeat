@@ -73,6 +73,50 @@ export interface GameState {
   w8BossCoveredAll?: boolean;
   // Harmonics Lab (Fourier / additive synthesis) tracking
   waveLabChallengesDone?: number;
+  // 方向3：社交分享与激励循环
+  weeklyLeaderboard?: Record<string, WeeklyScoreEntry[]>;
+  importedChallengeCodes?: string[];
+  lastCheckinPromptDate?: string;
+  // 方向4：个性化学习路径
+  wrongAnswerHistory?: WrongAnswerRecord[];
+  learningGoal?: LearningGoal;
+  // 对标成熟竞品打磨：XP 与等级系统 + 连胜护盾
+  xp?: number; // 累积 XP（单调递增）
+  level?: number; // 当前等级（1-99，由 xp 派生但缓存）
+  streakFreezes?: number; // 持有护盾数（上限 3）
+  lastFreezeAwardDate?: string; // 上次因 7 天连续打卡奖励护盾的日期
+}
+
+/** 方向3：周榜条目。 */
+export interface WeeklyScoreEntry {
+  score: number;
+  combo: number;
+  rounds: number;
+  accuracy: number;
+  date: string; // YYYY-MM-DD
+}
+
+/** 方向4：错题记录。 */
+export interface WrongAnswerRecord {
+  worldId: number;
+  worldName: string;
+  questionText: string;
+  correctAnswer: string | number;
+  userAnswer: string | number;
+  timestamp: number;
+}
+
+/** 方向4：学习目标与进度。 */
+export interface LearningGoal {
+  dailyTarget: number;
+  dailyCompleted: number;
+  dailyDate: string;
+  weeklyTarget: number;
+  weeklyCompleted: number;
+  weeklyKey: string;
+  bestDailyStreak: number;
+  dailyStreakMet: number;
+  lastMetDate: string;
 }
 
 export const CURRENT_SAVE_VERSION = '1.1';
@@ -133,6 +177,27 @@ export const DEFAULT_STATE: GameState = {
   w6RecursiveLayersUsed: false,
   w7MarkovEdited: false,
   w8BossCoveredAll: false,
+  // 方向3/4 字段初始化
+  weeklyLeaderboard: {},
+  importedChallengeCodes: [],
+  lastCheckinPromptDate: '',
+  wrongAnswerHistory: [],
+  learningGoal: {
+    dailyTarget: 10,
+    dailyCompleted: 0,
+    dailyDate: '',
+    weeklyTarget: 50,
+    weeklyCompleted: 0,
+    weeklyKey: '',
+    bestDailyStreak: 0,
+    dailyStreakMet: 0,
+    lastMetDate: '',
+  },
+  // XP / 等级 / 护盾
+  xp: 0,
+  level: 1,
+  streakFreezes: 0,
+  lastFreezeAwardDate: '',
 };
 
 type MigrationFn = (state: Record<string, unknown>) => void;
@@ -184,7 +249,19 @@ export const MIGRATIONS: Migration[] = [
   {
     version: '1.1',
     migrate(s) {
-      // 当前版本占位；后续新增字段时在此补全
+      // 方向3/4 字段补全（旧存档可能缺失）
+      if (!s.weeklyLeaderboard || typeof s.weeklyLeaderboard !== 'object') s.weeklyLeaderboard = {};
+      if (!Array.isArray(s.importedChallengeCodes)) s.importedChallengeCodes = [];
+      if (typeof s.lastCheckinPromptDate !== 'string') s.lastCheckinPromptDate = '';
+      if (!Array.isArray(s.wrongAnswerHistory)) s.wrongAnswerHistory = [];
+      if (!s.learningGoal || typeof s.learningGoal !== 'object') {
+        s.learningGoal = Object.assign({}, DEFAULT_STATE.learningGoal);
+      }
+      // XP / 等级 / 护盾
+      if (typeof s.xp !== 'number') s.xp = 0;
+      if (typeof s.level !== 'number') s.level = 1;
+      if (typeof s.streakFreezes !== 'number') s.streakFreezes = 0;
+      if (typeof s.lastFreezeAwardDate !== 'string') s.lastFreezeAwardDate = '';
       s.version = CURRENT_SAVE_VERSION;
     },
   },

@@ -25,6 +25,7 @@ import { renderWorld5, w5StopPlayback } from './worlds/world5';
 import { renderWorld6, w6Stop } from './worlds/world6';
 import { renderWorld7, w7Stop } from './worlds/world7';
 import { renderWorld8, w8Stop } from './worlds/world8';
+import { addXp, xpForAchievement, XP_REWARDS } from './progression';
 
 /* ===== GAME STATE =====
  * Runtime state backed by Store.state for persisted keys.
@@ -101,6 +102,14 @@ export function checkAchievements(): void {
       Store.save();
       showAchievementPopup(id);
       playAchievement();
+      // 按稀有度奖励 XP（common 20 / rare 50 / epic 100 / legendary 200）
+      try {
+        const ach = ACHIEVEMENTS.find((a) => a.id === id);
+        const xp = xpForAchievement(ach?.rarity);
+        if (xp > 0) addXp(xp, '成就 ' + (ach?.name || id));
+      } catch (e) {
+        /* progression 失败不影响主流程 */
+      }
     }
   };
   if (Object.values(p).some((v: any) => v >= 1)) tryEarn('first_star');
@@ -388,6 +397,7 @@ export function nextLevel(): void {
 }
 export function completeLevel(wid: number, lid: string, stars: number): void {
   const old = Store.state.progress[lid] || 0;
+  const isFirstClear = old === 0;
   Store.state.progress[lid] = Math.max(old, stars);
   Store.save();
   state.progress = Store.state.progress;
@@ -415,6 +425,14 @@ export function completeLevel(wid: number, lid: string, stars: number): void {
     showSuccessToast('解锁新内容：' + newKeys.map((k) => labels[k] || k).join('、'));
     spawnConfetti();
     playAchievement();
+  }
+  // XP 奖励：按星级 + 首次通关 bonus
+  try {
+    const xpReward =
+      (XP_REWARDS.levelStar[stars as 1 | 2 | 3] || 0) + (isFirstClear ? XP_REWARDS.firstClearBonus : 0);
+    if (xpReward > 0) addXp(xpReward, '通关 ' + lid);
+  } catch (e) {
+    /* progression 失败不影响主流程 */
   }
   if (wid >= 1 && wid <= 8) {
     const lvls = LEVELS[wid];

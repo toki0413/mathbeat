@@ -16,6 +16,7 @@ import { MATH_VISUALS } from './math-visuals';
 import { renderConceptMap, CONCEPT_NODES, getConceptConnections } from './concept-map';
 import { getBossProblem } from './boss-problems';
 import { state, isFreeModeUnlocked, stopAllPlayback, startLevel } from './game-engine';
+import { refreshXpBar, refreshFreezeBadge } from './progression';
 import {
   bgMusicUserMuted,
   bgMusicPlaying,
@@ -157,6 +158,13 @@ export function renderHome() {
   document.getElementById('totalStars')!.textContent = String(totalS);
   document.getElementById('bestComboDisplay')!.textContent = String(Store.state.bestCombo || 0);
   document.getElementById('achCount')!.textContent = String((Store.state.achievements || []).length);
+  // 刷新 XP 进度条与连胜护盾徽章
+  try {
+    refreshXpBar();
+    refreshFreezeBadge();
+  } catch (e) {
+    /* progression 未就绪不影响渲染 */
+  }
   const freeCard = document.getElementById('freeModeCard')!;
   const freeLock = document.getElementById('freeModeLock')!;
   const compCard = document.getElementById('composerHomeCard');

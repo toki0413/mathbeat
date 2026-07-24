@@ -230,6 +230,337 @@
       .stat-pill span {
         color: var(--trackA);
       }
+      /* XP 进度条与等级徽章（对标 Duolingo） */
+      .xp-bar {
+        margin: 4px 16px 10px;
+        background: var(--card);
+        border-radius: var(--radius);
+        padding: 10px 14px;
+        cursor: pointer;
+        box-shadow: 0 2px 10px rgba(124, 107, 255, 0.12);
+        transition: transform 0.15s, box-shadow 0.15s;
+        border: 2px solid transparent;
+      }
+      .xp-bar:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(124, 107, 255, 0.2);
+        border-color: rgba(124, 107, 255, 0.3);
+      }
+      .xp-bar:active {
+        transform: scale(0.99);
+      }
+      .xp-bar-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+        font-size: 12px;
+      }
+      .xp-bar-label {
+        font-size: 14px;
+        font-weight: 900;
+        color: #fff;
+        background: linear-gradient(135deg, #7c6bff, #a78bfa);
+        padding: 2px 10px;
+        border-radius: 12px;
+        letter-spacing: 0.3px;
+      }
+      .freeze-badge {
+        font-size: 12px;
+        font-weight: 800;
+        color: #4ecdc4;
+        background: rgba(78, 205, 196, 0.15);
+        padding: 2px 8px;
+        border-radius: 10px;
+      }
+      .xp-bar-remain {
+        margin-left: auto;
+        color: var(--dim);
+        font-weight: 600;
+      }
+      .xp-bar-track {
+        height: 8px;
+        background: rgba(0, 0, 0, 0.08);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .xp-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #7c6bff, #a78bfa, #4ecdc4);
+        background-size: 200% 100%;
+        border-radius: 4px;
+        transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: xpShimmer 3s linear infinite;
+      }
+      @keyframes xpShimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+      /* 等级详情 Modal 内部样式 */
+      .lv-box {
+        max-width: 380px;
+      }
+      .lv-body {
+        padding: 4px 4px 12px;
+      }
+      .lv-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+      .lv-badge {
+        font-size: 22px;
+        font-weight: 900;
+        color: #fff;
+        background: linear-gradient(135deg, #7c6bff, #a78bfa);
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 14px rgba(124, 107, 255, 0.35);
+      }
+      .lv-xp-text {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--trackA);
+      }
+      .lv-progress {
+        margin-bottom: 16px;
+      }
+      .lv-progress-bar {
+        height: 12px;
+        background: rgba(0, 0, 0, 0.08);
+        border-radius: 6px;
+        overflow: hidden;
+        margin-bottom: 6px;
+      }
+      .lv-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #7c6bff, #4ecdc4);
+        border-radius: 6px;
+        transition: width 0.4s ease;
+      }
+      .lv-progress-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: var(--dim);
+        font-weight: 600;
+      }
+      .lv-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      .lv-stat {
+        background: rgba(124, 107, 255, 0.08);
+        border-radius: 10px;
+        padding: 8px 4px;
+        text-align: center;
+      }
+      .lv-stat-num {
+        font-size: 18px;
+        font-weight: 900;
+        color: var(--trackA);
+      }
+      .lv-stat-label {
+        font-size: 10px;
+        color: var(--dim);
+        margin-top: 2px;
+      }
+      .lv-rules {
+        background: rgba(0, 0, 0, 0.03);
+        border-radius: 10px;
+        padding: 10px 12px;
+      }
+      .lv-rules-title {
+        font-size: 13px;
+        font-weight: 800;
+        margin-bottom: 6px;
+        color: var(--text);
+      }
+      .lv-rules ul {
+        margin: 0;
+        padding-left: 18px;
+        font-size: 12px;
+        color: var(--dim);
+        line-height: 1.7;
+      }
+      /* 分段练习模式 Practice Mode */
+      .practice-box {
+        max-width: 460px;
+      }
+      .practice-body {
+        padding: 4px 4px 12px;
+      }
+      .practice-tip {
+        font-size: 12px;
+        color: var(--dim);
+        background: rgba(78, 205, 196, 0.1);
+        border-radius: 8px;
+        padding: 8px 10px;
+        margin-bottom: 10px;
+        line-height: 1.5;
+      }
+      .practice-seq {
+        margin-bottom: 10px;
+        overflow-x: auto;
+      }
+      .practice-seq-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: max-content;
+      }
+      .practice-track-row,
+      .practice-step-row {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+      }
+      .practice-track-label {
+        width: 56px;
+        flex-shrink: 0;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--dim);
+        text-align: right;
+        padding-right: 6px;
+      }
+      .practice-step-num {
+        width: 26px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        color: var(--dim);
+        border-radius: 4px;
+        flex-shrink: 0;
+      }
+      .practice-step-num.in-loop {
+        background: rgba(124, 107, 255, 0.15);
+        color: var(--trackA);
+        font-weight: 800;
+      }
+      .practice-step-num.playhead {
+        background: var(--trackA);
+        color: #fff;
+      }
+      .practice-cell {
+        width: 26px;
+        height: 26px;
+        border-radius: 5px;
+        background: rgba(0, 0, 0, 0.06);
+        border: 1.5px solid transparent;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: transform 0.1s, background 0.15s;
+      }
+      .practice-cell:hover {
+        transform: scale(1.08);
+      }
+      .practice-cell.active.t-a {
+        background: var(--trackA);
+      }
+      .practice-cell.active.t-b {
+        background: var(--trackB);
+      }
+      .practice-cell.active.t-c {
+        background: #7bc67e;
+      }
+      .practice-cell.in-loop {
+        box-shadow: 0 0 0 2px rgba(124, 107, 255, 0.4);
+      }
+      .practice-cell.loop-start {
+        border-color: #7c6bff;
+        border-width: 2px;
+      }
+      .practice-cell.loop-end {
+        border-color: #4ecdc4;
+        border-width: 2px;
+      }
+      .practice-cell.error {
+        background: rgba(232, 93, 93, 0.08);
+      }
+      .practice-cell.error.marked {
+        background: var(--error);
+        box-shadow: 0 0 6px rgba(232, 93, 93, 0.5);
+      }
+      .practice-error-row .practice-track-label {
+        color: var(--error);
+      }
+      .practice-play-row {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 12px 0;
+      }
+      .practice-play-row .play-btn {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        font-size: 22px;
+      }
+      .practice-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .practice-ctrl-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        font-size: 12px;
+      }
+      .practice-ctrl-label {
+        font-weight: 800;
+        color: var(--text);
+        min-width: 56px;
+      }
+      .practice-speed-btn,
+      .practice-mini-btn {
+        background: var(--card);
+        border: 1.5px solid rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        padding: 4px 10px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .practice-speed-btn.active,
+      .practice-mini-btn.active {
+        background: linear-gradient(135deg, #7c6bff, #a78bfa);
+        color: #fff;
+        border-color: transparent;
+      }
+      .practice-speed-btn:hover,
+      .practice-mini-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
+      .practice-bpm {
+        font-size: 11px;
+        color: var(--dim);
+        font-weight: 700;
+        margin-left: auto;
+      }
+      .practice-loop-text {
+        font-size: 11px;
+        color: var(--trackA);
+        font-weight: 700;
+      }
+      .practice-loop-hint {
+        font-size: 10px;
+        color: var(--dim);
+      }
       .daily-challenge {
         margin: 0 16px 12px;
         background: linear-gradient(135deg, var(--trackA), var(--trackB));
@@ -2429,6 +2760,21 @@
         <div class="stat-pill">⭐ <span id="totalStars">0</span></div>
         <div class="stat-pill">🔥 <span id="bestComboDisplay">0</span></div>
         <div class="stat-pill">🏆 <span id="achCount">0</span></div>
+      </div>
+      <div
+        id="xpBar"
+        class="xp-bar"
+        data-action="showLevelModal"
+        role="button"
+        tabindex="0"
+        aria-label="查看等级与 XP 详情"
+      >
+        <div class="xp-bar-info">
+          <span class="xp-bar-label">Lv.1</span>
+          <span id="freezeBadge" class="freeze-badge" style="display: none">🛡️ 0</span>
+          <span class="xp-bar-remain">还差 120 XP</span>
+        </div>
+        <div class="xp-bar-track"><div class="xp-bar-fill" style="width: 0%"></div></div>
       </div>
       <div
         class="daily-challenge"

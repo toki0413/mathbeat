@@ -20,6 +20,8 @@ export interface Level {
   ops?: string[];
 }
 
+export type AchievementRarity = 'common' | 'rare' | 'epic' | 'legendary';
+
 export interface Achievement {
   id: string;
   name: string;
@@ -27,6 +29,7 @@ export interface Achievement {
   icon: string;
   cat: string;
   hidden?: boolean;
+  rarity?: AchievementRarity; // 缺省为 'common'
 }
 
 export interface CurriculumItem {
@@ -314,29 +317,29 @@ export const CURRICULUM: Record<string, CurriculumItem> = {
 };
 
 export const ACHIEVEMENTS: Achievement[] = [
-  { id: 'first_star', name: '初星', desc: '获得第一颗星', icon: '⭐', cat: 'progress' },
-  { id: 'all_world1', name: '节奏达人', desc: '通关世界1', icon: '🥁', cat: 'progress' },
-  { id: 'all_world2', name: '音程大师', desc: '通关世界2', icon: '🎵', cat: 'progress' },
-  { id: 'all_world3', name: '波形探索者', desc: '通关世界3', icon: '🌊', cat: 'progress' },
-  { id: 'all_world4', name: '环论新星', desc: '通关世界4', icon: '🔄', cat: 'progress' },
-  { id: 'all_world5', name: '指挥天才', desc: '通关世界5', icon: '🎯', cat: 'progress' },
-  { id: 'all_world6', name: '作曲家', desc: '通关世界6', icon: '🔨', cat: 'progress' },
-  { id: 'all_world7', name: '随机大师', desc: '通关世界7', icon: '🎲', cat: 'progress' },
-  { id: 'all_world8', name: '图论指挥', desc: '通关世界8', icon: '🕸️', cat: 'progress' },
-  { id: 'combo_5', name: '五连击', desc: '连续答对5题', icon: '🔥', cat: 'skill' },
-  { id: 'combo_10', name: '十连击', desc: '连续答对10题', icon: '💥', cat: 'skill' },
-  { id: 'perfect_boss', name: '完美Boss', desc: 'Boss关三星', icon: '👑', cat: 'skill' },
-  { id: 'speed_runner', name: '速通者', desc: '1分钟内通过一个Boss关', icon: '⏱️', cat: 'skill' },
-  { id: 'no_hint_clear', name: '无提示通关', desc: '不使用提示通关任意世界', icon: '🧠', cat: 'skill' },
-  { id: 'diary_5', name: '日记达人', desc: '写5篇数学日记', icon: '📝', cat: 'explore' },
-  { id: 'science_first', name: '声化学者', desc: '在科学之声生成第一段旋律', icon: '🔬', cat: 'explore' },
-  { id: 'science_all', name: '跨界学者', desc: '使用过4种以上科学类型', icon: '🧬', cat: 'explore' },
-  { id: 'sample_all', name: '摇滚鉴赏家', desc: '播放过全部9首示例曲', icon: '🎸', cat: 'explore' },
-  { id: 'daily_7', name: '七日打卡', desc: '连续7天完成每日挑战', icon: '📅', cat: 'explore' },
-  { id: 'daily_all_types', name: '全能挑战者', desc: '完成过全部12种每日挑战类型', icon: '🌈', cat: 'explore' },
-  { id: 'composer_export', name: 'MIDI达人', desc: '在完整作曲台导出过一次MIDI', icon: '🎼', cat: 'explore' },
-  { id: 'math_rock_30s', name: '数学摇滚手', desc: '在完整作曲台创作超过30秒的音乐', icon: '🤘', cat: 'explore' },
-  { id: 'hidden_lucky', name: '幸运儿', desc: '连续掷骰子3次都命中', icon: '🍀', cat: 'hidden', hidden: true },
+  { id: 'first_star', name: '初星', desc: '获得第一颗星', icon: '⭐', cat: 'progress', rarity: 'common' },
+  { id: 'all_world1', name: '节奏达人', desc: '通关世界1', icon: '🥁', cat: 'progress', rarity: 'common' },
+  { id: 'all_world2', name: '音程大师', desc: '通关世界2', icon: '🎵', cat: 'progress', rarity: 'common' },
+  { id: 'all_world3', name: '波形探索者', desc: '通关世界3', icon: '🌊', cat: 'progress', rarity: 'common' },
+  { id: 'all_world4', name: '环论新星', desc: '通关世界4', icon: '🔄', cat: 'progress', rarity: 'rare' },
+  { id: 'all_world5', name: '指挥天才', desc: '通关世界5', icon: '🎯', cat: 'progress', rarity: 'rare' },
+  { id: 'all_world6', name: '作曲家', desc: '通关世界6', icon: '🔨', cat: 'progress', rarity: 'rare' },
+  { id: 'all_world7', name: '随机大师', desc: '通关世界7', icon: '🎲', cat: 'progress', rarity: 'rare' },
+  { id: 'all_world8', name: '图论指挥', desc: '通关世界8', icon: '🕸️', cat: 'progress', rarity: 'rare' },
+  { id: 'combo_5', name: '五连击', desc: '连续答对5题', icon: '🔥', cat: 'skill', rarity: 'common' },
+  { id: 'combo_10', name: '十连击', desc: '连续答对10题', icon: '💥', cat: 'skill', rarity: 'rare' },
+  { id: 'perfect_boss', name: '完美Boss', desc: 'Boss关三星', icon: '👑', cat: 'skill', rarity: 'rare' },
+  { id: 'speed_runner', name: '速通者', desc: '1分钟内通过一个Boss关', icon: '⏱️', cat: 'skill', rarity: 'epic' },
+  { id: 'no_hint_clear', name: '无提示通关', desc: '不使用提示通关任意世界', icon: '🧠', cat: 'skill', rarity: 'epic' },
+  { id: 'diary_5', name: '日记达人', desc: '写5篇数学日记', icon: '📝', cat: 'explore', rarity: 'common' },
+  { id: 'science_first', name: '声化学者', desc: '在科学之声生成第一段旋律', icon: '🔬', cat: 'explore', rarity: 'common' },
+  { id: 'science_all', name: '跨界学者', desc: '使用过4种以上科学类型', icon: '🧬', cat: 'explore', rarity: 'rare' },
+  { id: 'sample_all', name: '摇滚鉴赏家', desc: '播放过全部9首示例曲', icon: '🎸', cat: 'explore', rarity: 'rare' },
+  { id: 'daily_7', name: '七日打卡', desc: '连续7天完成每日挑战', icon: '📅', cat: 'explore', rarity: 'rare' },
+  { id: 'daily_all_types', name: '全能挑战者', desc: '完成过全部12种每日挑战类型', icon: '🌈', cat: 'explore', rarity: 'epic' },
+  { id: 'composer_export', name: 'MIDI达人', desc: '在完整作曲台导出过一次MIDI', icon: '🎼', cat: 'explore', rarity: 'common' },
+  { id: 'math_rock_30s', name: '数学摇滚手', desc: '在完整作曲台创作超过30秒的音乐', icon: '🤘', cat: 'explore', rarity: 'common' },
+  { id: 'hidden_lucky', name: '幸运儿', desc: '连续掷骰子3次都命中', icon: '🍀', cat: 'hidden', hidden: true, rarity: 'rare' },
   {
     id: 'hidden_perfect_pitch',
     name: '绝对音感',
@@ -344,32 +347,33 @@ export const ACHIEVEMENTS: Achievement[] = [
     icon: '🎧',
     cat: 'hidden',
     hidden: true,
+    rarity: 'legendary',
   },
-  { id: 'mastery_world1', name: '世界1精通', desc: '世界1全部关卡三星', icon: '🥁', cat: 'progress' },
-  { id: 'mastery_world2', name: '世界2精通', desc: '世界2全部关卡三星', icon: '🎵', cat: 'progress' },
-  { id: 'mastery_world3', name: '世界3精通', desc: '世界3全部关卡三星', icon: '🌊', cat: 'progress' },
-  { id: 'mastery_world4', name: '世界4精通', desc: '世界4全部关卡三星', icon: '🔄', cat: 'progress' },
-  { id: 'mastery_world5', name: '世界5精通', desc: '世界5全部关卡三星', icon: '🎯', cat: 'progress' },
-  { id: 'mastery_world6', name: '世界6精通', desc: '世界6全部关卡三星', icon: '🔨', cat: 'progress' },
-  { id: 'mastery_world7', name: '世界7精通', desc: '世界7全部关卡三星', icon: '🎲', cat: 'progress' },
-  { id: 'mastery_world8', name: '世界8精通', desc: '世界8全部关卡三星', icon: '🕸️', cat: 'progress' },
-  { id: 'perfect_all_bosses', name: 'Boss全完美', desc: '全部Boss关三星', icon: '👑', cat: 'skill' },
-  { id: 'endless_50', name: '无尽50分', desc: '无尽模式单局50分', icon: '🔥', cat: 'skill' },
-  { id: 'endless_100', name: '无尽100分', desc: '无尽模式单局100分', icon: '💯', cat: 'skill' },
-  { id: 'import_sample', name: '示例曲复用', desc: '从示例曲库导入到作曲台', icon: '🎸', cat: 'explore' },
-  { id: 'share_composer', name: '分享作曲家', desc: '分享作曲台作品', icon: '📋', cat: 'explore' },
-  { id: 'export_science', name: '科学之声导出', desc: '从科学之声导出到作曲台', icon: '🔬', cat: 'explore' },
-  { id: 'create_custom_level', name: '关卡设计师', desc: '创建并保存自定义关卡', icon: '🛠️', cat: 'explore' },
+  { id: 'mastery_world1', name: '世界1精通', desc: '世界1全部关卡三星', icon: '🥁', cat: 'progress', rarity: 'epic' },
+  { id: 'mastery_world2', name: '世界2精通', desc: '世界2全部关卡三星', icon: '🎵', cat: 'progress', rarity: 'epic' },
+  { id: 'mastery_world3', name: '世界3精通', desc: '世界3全部关卡三星', icon: '🌊', cat: 'progress', rarity: 'epic' },
+  { id: 'mastery_world4', name: '世界4精通', desc: '世界4全部关卡三星', icon: '🔄', cat: 'progress', rarity: 'epic' },
+  { id: 'mastery_world5', name: '世界5精通', desc: '世界5全部关卡三星', icon: '🎯', cat: 'progress', rarity: 'epic' },
+  { id: 'mastery_world6', name: '世界6精通', desc: '世界6全部关卡三星', icon: '🔨', cat: 'progress', rarity: 'epic' },
+  { id: 'mastery_world7', name: '世界7精通', desc: '世界7全部关卡三星', icon: '🎲', cat: 'progress', rarity: 'epic' },
+  { id: 'mastery_world8', name: '世界8精通', desc: '世界8全部关卡三星', icon: '🕸️', cat: 'progress', rarity: 'epic' },
+  { id: 'perfect_all_bosses', name: 'Boss全完美', desc: '全部Boss关三星', icon: '👑', cat: 'skill', rarity: 'legendary' },
+  { id: 'endless_50', name: '无尽50分', desc: '无尽模式单局50分', icon: '🔥', cat: 'skill', rarity: 'common' },
+  { id: 'endless_100', name: '无尽100分', desc: '无尽模式单局100分', icon: '💯', cat: 'skill', rarity: 'rare' },
+  { id: 'import_sample', name: '示例曲复用', desc: '从示例曲库导入到作曲台', icon: '🎸', cat: 'explore', rarity: 'common' },
+  { id: 'share_composer', name: '分享作曲家', desc: '分享作曲台作品', icon: '📋', cat: 'explore', rarity: 'common' },
+  { id: 'export_science', name: '科学之声导出', desc: '从科学之声导出到作曲台', icon: '🔬', cat: 'explore', rarity: 'common' },
+  { id: 'create_custom_level', name: '关卡设计师', desc: '创建并保存自定义关卡', icon: '🛠️', cat: 'explore', rarity: 'common' },
   // phase-2 explore / skill achievements
-  { id: 'tuning_explorer', name: '调音探险家', desc: '在世界3听过全部6种目标频率比', icon: '🎧', cat: 'explore' },
-  { id: 'symmetry_axis', name: '轴心乐手', desc: '在世界2使用非默认倒影轴并通过关卡', icon: '🪞', cat: 'skill' },
-  { id: 'original_reflection', name: '双面听众', desc: '在世界2同时播放原象与倒影和弦', icon: '🎭', cat: 'explore' },
-  { id: 'recursive_layers', name: '分形编曲家', desc: '在世界6同时开启旋律、质数和弦与递归层', icon: '🌿', cat: 'skill' },
-  { id: 'markov_editor', name: '概率作曲家', desc: '在世界7编辑马尔可夫矩阵并生成旋律', icon: '🎲', cat: 'explore' },
-  { id: 'graph_hamilton', name: '哈密顿指挥', desc: '在世界8 Boss用最少步数覆盖所有节点', icon: '🕸️', cat: 'skill' },
+  { id: 'tuning_explorer', name: '调音探险家', desc: '在世界3听过全部6种目标频率比', icon: '🎧', cat: 'explore', rarity: 'rare' },
+  { id: 'symmetry_axis', name: '轴心乐手', desc: '在世界2使用非默认倒影轴并通过关卡', icon: '🪞', cat: 'skill', rarity: 'rare' },
+  { id: 'original_reflection', name: '双面听众', desc: '在世界2同时播放原象与倒影和弦', icon: '🎭', cat: 'explore', rarity: 'rare' },
+  { id: 'recursive_layers', name: '分形编曲家', desc: '在世界6同时开启旋律、质数和弦与递归层', icon: '🌿', cat: 'skill', rarity: 'epic' },
+  { id: 'markov_editor', name: '概率作曲家', desc: '在世界7编辑马尔可夫矩阵并生成旋律', icon: '🎲', cat: 'explore', rarity: 'rare' },
+  { id: 'graph_hamilton', name: '哈密顿指挥', desc: '在世界8 Boss用最少步数覆盖所有节点', icon: '🕸️', cat: 'skill', rarity: 'legendary' },
   // Harmonics Lab (Fourier / additive synthesis) achievements
-  { id: 'wavelab_first', name: '傅里叶学徒', desc: '在谐波实验室首次通过猜波形挑战', icon: '〰️', cat: 'explore' },
-  { id: 'wavelab_master', name: '频谱大师', desc: '在谐波实验室通过3次猜波形挑战', icon: '🎛️', cat: 'skill' },
+  { id: 'wavelab_first', name: '傅里叶学徒', desc: '在谐波实验室首次通过猜波形挑战', icon: '〰️', cat: 'explore', rarity: 'common' },
+  { id: 'wavelab_master', name: '频谱大师', desc: '在谐波实验室通过3次猜波形挑战', icon: '🎛️', cat: 'skill', rarity: 'epic' },
 ];
 
 export const MATH_CONCEPTS: Record<string, MathConcept> = {

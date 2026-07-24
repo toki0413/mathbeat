@@ -290,6 +290,9 @@ import * as i18nModule from './i18n';
 import * as storage from './storage';
 import * as endlessModule from './endless-mode';
 import * as levelEditorModule from './level-editor';
+import * as progressionModule from './progression';
+import * as practiceModeModule from './practice-mode';
+import { refreshXpBar, refreshFreezeBadge } from './progression';
 import { registerActions, initEventDelegation } from './events';
 
 declare global {
@@ -427,6 +430,13 @@ window.onload = function () {
     updateDailyBanner();
     applyTranslations();
     startHomeVisualizer();
+    // 刷新 XP 进度条与连胜护盾徽章（若首页 DOM 存在）
+    try {
+      refreshXpBar();
+      refreshFreezeBadge();
+    } catch (e) {
+      /* ignore */
+    }
     if (!Store.state.onboardingDone) {
       showOnboarding();
     }

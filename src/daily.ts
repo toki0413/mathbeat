@@ -15,6 +15,7 @@ import { w5DegreeName } from './worlds/world5';
 import { renderHome, showWhy } from './ui-render';
 import { SCIENCE_SAMPLES } from './science';
 import { registerActions, registerInputs } from './events';
+import { addXp, XP_REWARDS, tryAwardStreakFreeze, consumeStreakFreeze } from './progression';
 
 export function getDailyChallenge() {
   const seed = getDailySeed();
@@ -634,6 +635,13 @@ export function dailyChallengeSuccess() {
     Store.save();
     renderHome();
     updateDailyBanner();
+    // XP 奖励：完成每日挑战 +30 XP；并检测连胜护盾奖励（每 7 天）
+    try {
+      addXp(XP_REWARDS.dailyComplete, '每日挑战');
+      tryAwardStreakFreeze();
+    } catch (e) {
+      /* progression 失败不影响主流程 */
+    }
   }
   (window as any).spawnConfetti();
   checkAchievements();
@@ -644,7 +652,14 @@ export function updateDailyStreak() {
   if (Store.state.dailyLastDate === yesterday) {
     Store.state.dailyStreak++;
   } else if (Store.state.dailyLastDate !== today) {
-    Store.state.dailyStreak = 1;
+    // 断签：尝试用连胜护盾保护原连胜
+    const prevStreak = Store.state.dailyStreak || 0;
+    if (prevStreak > 0 && consumeStreakFreeze()) {
+      // 护盾生效，延续连胜并 +1
+      Store.state.dailyStreak = prevStreak + 1;
+    } else {
+      Store.state.dailyStreak = 1;
+    }
   }
   Store.state.dailyLastDate = today;
 }

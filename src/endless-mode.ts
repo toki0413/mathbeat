@@ -5,6 +5,7 @@ import { lcmCalc, gcdCalc, euclideanRhythm, midiToFreq, harmonicAmplitudes, spec
 import { showHintFloat, closeEndlessMode } from './ui-render';
 import { stopAllPlayback } from './game-engine';
 import { registerActions } from './events';
+import { addXp, XP_REWARDS } from './progression';
 
 export interface EndlessQuestion {
   worldId: number;
@@ -594,6 +595,15 @@ export function endEndlessMode(): void {
   stats.bestCombo = Math.max(stats.bestCombo, endlessState.maxCombo);
   Store.state.endlessStats = stats;
   Store.save();
+  // XP 奖励：每分 1 XP + 完成一局 bonus（至少答对 1 题才给 bonus）
+  try {
+    const scoreXp = Math.floor(endlessState.score * XP_REWARDS.endlessPerPoint);
+    const finishXp = endlessState.correctCount > 0 ? XP_REWARDS.endlessFinishBonus : 0;
+    const total = scoreXp + finishXp;
+    if (total > 0) addXp(total, 'Endless 得分 ' + endlessState.score);
+  } catch (e) {
+    /* progression 失败不影响主流程 */
+  }
   showEndlessResults();
 }
 

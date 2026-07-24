@@ -292,6 +292,7 @@ import * as endlessModule from './endless-mode';
 import * as levelEditorModule from './level-editor';
 import * as progressionModule from './progression';
 import * as practiceModeModule from './practice-mode';
+import * as learningInsightsModule from './learning-insights';
 import { refreshXpBar, refreshFreezeBadge } from './progression';
 import { registerActions, initEventDelegation } from './events';
 

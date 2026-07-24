@@ -764,6 +764,231 @@
         color: var(--dim);
         margin-top: 2px;
       }
+      /* 首页学习洞察入口按钮 */
+      .home-insights-btn {
+        display: block;
+        margin: 0 16px 12px;
+        padding: 10px 14px;
+        background: linear-gradient(135deg, rgba(124, 107, 255, 0.1), rgba(78, 205, 196, 0.1));
+        border: 1.5px solid rgba(124, 107, 255, 0.25);
+        border-radius: var(--radius);
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--trackA);
+        cursor: pointer;
+        transition: all 0.15s;
+        text-align: center;
+      }
+      .home-insights-btn:hover {
+        background: linear-gradient(135deg, rgba(124, 107, 255, 0.18), rgba(78, 205, 196, 0.18));
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(124, 107, 255, 0.15);
+      }
+      /* 学习洞察 Modal */
+      .li-box {
+        max-width: 420px;
+      }
+      .li-tabs {
+        display: flex;
+        gap: 4px;
+        padding: 8px 12px 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      }
+      .li-tab {
+        flex: 1;
+        padding: 8px 4px;
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid transparent;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--dim);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .li-tab.active {
+        color: var(--trackA);
+        border-bottom-color: var(--trackA);
+      }
+      .li-body {
+        padding: 12px;
+        max-height: 60vh;
+        overflow-y: auto;
+      }
+      .li-empty {
+        text-align: center;
+        padding: 32px 16px;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--trackA);
+      }
+      .li-empty-sub {
+        display: block;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--dim);
+        margin-top: 4px;
+      }
+      /* 薄弱点卡片 */
+      .li-wp-card {
+        background: var(--card);
+        border-radius: 12px;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+      }
+      .li-wp-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 6px;
+      }
+      .li-wp-emoji {
+        font-size: 18px;
+      }
+      .li-wp-name {
+        font-size: 13px;
+        font-weight: 800;
+        color: var(--text);
+        flex: 1;
+      }
+      .li-wp-wrong {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--error);
+      }
+      .li-wp-bar {
+        height: 6px;
+        background: rgba(0, 0, 0, 0.06);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 6px;
+      }
+      .li-wp-bar-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.4s ease;
+      }
+      .li-wp-levels {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+      }
+      .li-wp-chip {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 6px;
+        background: rgba(232, 93, 93, 0.12);
+        color: var(--error);
+        border-radius: 8px;
+      }
+      /* 错题本 */
+      .li-wa-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 11px;
+        color: var(--dim);
+        margin-bottom: 8px;
+      }
+      .li-wa-clear {
+        background: transparent;
+        border: 1px solid var(--error);
+        color: var(--error);
+        font-size: 10px;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .li-wa-item {
+        background: var(--card);
+        border-radius: 10px;
+        padding: 8px 10px;
+        margin-bottom: 6px;
+        position: relative;
+        border-left: 3px solid var(--error);
+      }
+      .li-wa-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        color: var(--dim);
+        margin-bottom: 4px;
+      }
+      .li-wa-world {
+        font-weight: 700;
+      }
+      .li-wa-q {
+        font-size: 12px;
+        color: var(--text);
+        margin-bottom: 4px;
+        line-height: 1.4;
+        padding-right: 20px;
+      }
+      .li-wa-answers {
+        display: flex;
+        gap: 10px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .li-wa-correct {
+        color: #4ecdc4;
+      }
+      .li-wa-user {
+        color: var(--error);
+      }
+      .li-wa-del {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(0, 0, 0, 0.06);
+        color: var(--dim);
+        font-size: 11px;
+        cursor: pointer;
+        line-height: 1;
+      }
+      /* 学习曲线 */
+      .li-curve-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .li-curve-stat {
+        background: rgba(124, 107, 255, 0.08);
+        border-radius: 10px;
+        padding: 8px 4px;
+        text-align: center;
+      }
+      .li-curve-num {
+        font-size: 18px;
+        font-weight: 900;
+        color: var(--trackA);
+      }
+      .li-curve-label {
+        font-size: 10px;
+        color: var(--dim);
+        margin-top: 2px;
+      }
+      .li-curve-legend {
+        text-align: center;
+        font-size: 10px;
+        color: var(--dim);
+        margin-top: 4px;
+      }
+      .li-curve-legend .dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin: 0 2px 0 8px;
+        vertical-align: middle;
+      }
       .daily-challenge {
         margin: 0 16px 12px;
         background: linear-gradient(135deg, var(--trackA), var(--trackB));
@@ -3143,6 +3368,9 @@
         </div>
         <div id="streakCalendar" class="streak-cal-card"></div>
       </div>
+      <button class="home-insights-btn" data-action="openLearningInsights" aria-label="学习洞察">
+        📊 学习洞察：错题本 · 薄弱点 · 学习曲线
+      </button>
       <div id="continueBar" style="display: none"></div>
       <div id="worldGrid">
         <div id="worldGridSkeleton" style="display: flex; flex-wrap: wrap; gap: 10px; padding: 4px 0">

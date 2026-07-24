@@ -16,6 +16,7 @@ import { renderHome, showWhy } from './ui-render';
 import { SCIENCE_SAMPLES } from './science';
 import { registerActions, registerInputs } from './events';
 import { addXp, XP_REWARDS, tryAwardStreakFreeze, consumeStreakFreeze, recordLearningProgress } from './progression';
+import { recordWrongAnswer } from './learning-insights';
 
 export function getDailyChallenge() {
   const seed = getDailySeed();
@@ -534,6 +535,11 @@ export function checkDailyAnswer() {
     dailyChallengeSuccess();
   } else {
     showDailyFeedback('答案不对，再想想', false);
+    try {
+      recordDailyWrongAnswer();
+    } catch (e) {
+      /* ignore */
+    }
   }
 }
 export function dailyPermAnswer(e: Event, ...args: unknown[]) {
@@ -542,6 +548,11 @@ export function dailyPermAnswer(e: Event, ...args: unknown[]) {
     dailyChallengeSuccess();
   } else {
     showDailyFeedback('判断有误，再想想', false);
+    try {
+      recordDailyWrongAnswer();
+    } catch (e) {
+      /* ignore */
+    }
   }
 }
 export function dailyGraphAnswer(e: Event, ...args: unknown[]) {
@@ -550,6 +561,11 @@ export function dailyGraphAnswer(e: Event, ...args: unknown[]) {
     dailyChallengeSuccess();
   } else {
     showDailyFeedback('判断有误，再想想', false);
+    try {
+      recordDailyWrongAnswer();
+    } catch (e) {
+      /* ignore */
+    }
   }
 }
 export function dailySciencePlay() {
@@ -608,6 +624,38 @@ export function dailyScienceAnswer(e: Event, ...args: unknown[]) {
   } else {
     showDailyFeedback('判断有误，再想想', false);
   }
+}
+/** 记录每日挑战答错到错题本（统一封装，避免重复代码）。 */
+function recordDailyWrongAnswer(): void {
+  const d = dailyState.data;
+  if (!d) return;
+  // 构造题面与用户答案
+  let questionText = d.name + '（每日挑战）';
+  let userAnswer: string | number = '';
+  try {
+    if (d.type === 'lcm' || d.type === 'gcd' || d.type === 'fibonacci' || d.type === 'mod' || d.type === 'series') {
+      const input = document.getElementById('dailyInput') as HTMLInputElement | null;
+      if (input) userAnswer = input.value;
+      if (d.type === 'lcm') questionText = `两个轨道拍数 ${d.a} 和 ${d.b}，何时对齐（LCM）？`;
+      else if (d.desc) questionText = d.desc;
+    } else if (d.type === 'probability') {
+      const input = document.getElementById('dailyProbInput') as HTMLInputElement | null;
+      if (input) userAnswer = input.value;
+      questionText = `${d.n} 个事件，每个 ${d.p}% 概率，期望多少个发生？`;
+    } else if (d.type === 'symmetry' || d.type === 'permutation' || d.type === 'graph' || d.type === 'euclidean') {
+      questionText = d.name + '：判断所选/所填是否正确';
+      userAnswer = '错误选择';
+    }
+  } catch (e) {
+    /* ignore */
+  }
+  recordWrongAnswer({
+    worldId: 0,
+    worldName: d.name || '每日挑战',
+    questionText,
+    correctAnswer: d.answer,
+    userAnswer,
+  });
 }
 export function showDailyFeedback(msg: string, success: boolean) {
   const fb = document.getElementById('dailyFeedback')!;

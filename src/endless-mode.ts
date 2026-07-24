@@ -6,6 +6,7 @@ import { showHintFloat, closeEndlessMode } from './ui-render';
 import { stopAllPlayback } from './game-engine';
 import { registerActions } from './events';
 import { addXp, XP_REWARDS, recordLearningProgress } from './progression';
+import { recordWrongAnswer } from './learning-insights';
 
 export interface EndlessQuestion {
   worldId: number;
@@ -557,6 +558,17 @@ export function submitAnswer(e: Event | string | number, ...args: unknown[]): vo
     endlessState.combo = 0;
     playWrong();
     showHintFloat(`❌ 正确答案是 ${q.correctAnswer}`);
+    try {
+      recordWrongAnswer({
+        worldId: q.worldId,
+        worldName: q.worldName,
+        questionText: q.text,
+        correctAnswer: q.correctAnswer,
+        userAnswer: answer,
+      });
+    } catch (e) {
+      /* ignore */
+    }
   }
 
   renderEndlessUI();

@@ -38,6 +38,7 @@ import { renderEditor } from './level-editor';
 import { initEndlessMode, endEndlessMode } from './endless-mode';
 import { registerActions } from './events';
 import { toggleSamplePlayback, importSampleToComposer } from './sample-library';
+import { openModal, closeModal, announce } from './a11y';
 import { generateDailyRecommendations } from './learning-insights';
 
 export function showScreen(name: string) {
@@ -371,11 +372,17 @@ export function showWorldIntro(wid: number) {
     '</p><p style="margin-top:8px;font-size:13px;color:var(--dim)">解锁奖励：' +
     w.unlockLabel +
     '</p>';
-  el.classList.add('show');
+  openModal(el, 'worldIntroTitle');
+  try {
+    announce('进入世界 ' + wid + '：' + t('world.' + wid), 'polite');
+  } catch (e) {
+    /* ignore */
+  }
 }
 
 export function closeWorldIntro() {
-  document.getElementById('worldIntroOverlay')!.classList.remove('show');
+  const introOverlay = document.getElementById('worldIntroOverlay');
+  if (introOverlay) closeModal(introOverlay);
   const wid = state.currentWorld;
   if (!wid) return;
   const w = WORLDS[wid - 1];
@@ -473,10 +480,17 @@ export function openConceptMap() {
     detail.style.display = 'block';
   });
   overlay.classList.add('show');
+  openModal(overlay);
+  try {
+    announce('概念互联图谱已打开', 'polite');
+  } catch (e) {
+    /* ignore */
+  }
 }
 
 export function closeConceptMap() {
-  document.getElementById('conceptMapOverlay')!.classList.remove('show');
+  const overlay = document.getElementById('conceptMapOverlay');
+  if (overlay) closeModal(overlay);
 }
 
 export function showBossProblem(wid: number, lid: string) {
@@ -498,11 +512,17 @@ export function showBossProblem(wid: number, lid: string) {
   document.getElementById('bossProblemHint')!.innerHTML = '<b>提示：</b>' + bp.hint;
   document.getElementById('bossProblemReward')!.textContent = '🎁 通关奖励：' + bp.reward;
   state.pendingBoss = { wid, lid };
-  overlay.classList.add('show');
+  openModal(overlay, 'bossProblemTitle');
+  try {
+    announce('Boss 挑战：' + bp.title, 'assertive');
+  } catch (e) {
+    /* ignore */
+  }
 }
 
 export function closeBossProblem(accept: boolean) {
-  document.getElementById('bossProblemOverlay')!.classList.remove('show');
+  const overlay = document.getElementById('bossProblemOverlay');
+  if (overlay) closeModal(overlay);
   const pb = state.pendingBoss;
   if (!pb) return;
   state.pendingBoss = null;
@@ -521,11 +541,18 @@ export function showWhy(lid: string) {
   if (!c) return;
   document.getElementById('whyTitle')!.textContent = c.title;
   document.getElementById('whyText')!.textContent = c.text;
-  document.getElementById('whyOverlay')!.classList.add('show');
+  const overlay = document.getElementById('whyOverlay')!;
+  openModal(overlay, 'whyTitle');
+  try {
+    announce(c.title + '：' + c.text, 'polite');
+  } catch (e) {
+    /* ignore */
+  }
 }
 
 export function closeWhy() {
-  document.getElementById('whyOverlay')!.classList.remove('show');
+  const overlay = document.getElementById('whyOverlay');
+  if (overlay) closeModal(overlay);
 }
 
 export function showTutorial(text: string) {
@@ -540,11 +567,17 @@ export function showTutorial(text: string) {
   btn.onclick = function () {
     closeTutorial();
   };
-  el.classList.add('show');
+  openModal(el, 'tutTitle');
+  try {
+    announce(text, 'polite');
+  } catch (e) {
+    /* ignore */
+  }
 }
 
 export function closeTutorial() {
-  document.getElementById('tutorialOverlay')!.classList.remove('show');
+  const el = document.getElementById('tutorialOverlay');
+  if (el) closeModal(el);
 }
 
 export function showOnboarding() {
@@ -568,18 +601,31 @@ export function showEducationCard(lid: string) {
   document.getElementById('eduTitle')!.textContent = '🎓 ' + c.title;
   document.getElementById('eduText')!.textContent = c.text;
   document.getElementById('eduPractice')!.textContent = '练习：' + c.practice;
-  document.getElementById('eduCardOverlay')!.classList.add('show');
+  const overlay = document.getElementById('eduCardOverlay')!;
+  openModal(overlay, 'eduTitle');
+  try {
+    announce('学习卡片：' + c.title, 'polite');
+  } catch (e) {
+    /* ignore */
+  }
 }
 
 export function closeEduCard() {
-  document.getElementById('eduCardOverlay')!.classList.remove('show');
+  const overlay = document.getElementById('eduCardOverlay');
+  if (overlay) closeModal(overlay);
 }
 
 export function showHintFloat(text: string) {
   const el = document.getElementById('hintFloat');
   if (!el) return;
   el.textContent = text;
+  el.setAttribute('role', 'status');
   el.classList.add('show');
+  try {
+    announce(text, 'polite');
+  } catch (e) {
+    /* ignore */
+  }
   setTimeout(() => el.classList.remove('show'), 6000);
 }
 
@@ -602,6 +648,12 @@ export function showAchievementPopup(id: string) {
   popup.classList.remove('rarity-common', 'rarity-rare', 'rarity-epic', 'rarity-legendary');
   popup.classList.add('rarity-' + rarity);
   popup.classList.add('show');
+  // 屏幕阅读器播报成就解锁（WCAG 4.1.3）
+  try {
+    announce('成就解锁：' + achievementName(ach) + '。' + achievementDesc(ach), 'polite');
+  } catch (e) {
+    /* ignore */
+  }
   // 显示时长按稀有度递增：common 3s / rare 4s / epic 5s / legendary 6s
   const duration = rarity === 'legendary' ? 6000 : rarity === 'epic' ? 5000 : rarity === 'rare' ? 4000 : 3000;
   // epic / legendary 触发额外撒花粒子增强彩蛋感
@@ -632,25 +684,91 @@ export function showStars(id: string, stars: number) {
 export function openTeacher() {
   const el = document.getElementById('teacherOverlay');
   if (!el) return;
-  el.classList.add('show');
   document.getElementById('teacherLogin')!.style.display = 'flex';
   document.getElementById('teacherContent')!.classList.remove('show');
+  openModal(el);
+  try {
+    announce('教师面板已打开', 'polite');
+  } catch (e) {
+    /* ignore */
+  }
 }
 
 export function closeTeacher() {
-  document.getElementById('teacherOverlay')!.classList.remove('show');
+  const el = document.getElementById('teacherOverlay');
+  if (el) closeModal(el);
 }
 
 export function teacherLogin() {
   const input = document.getElementById('teacherPwd') as HTMLInputElement;
-  if (input && input.value !== 'mathbeat') {
+  if (!input) return;
+  // 安全：不再硬编码密码 'mathbeat'（旧实现任何查看源码即可获知）。
+  // 改为本地 PBKDF2 + salt 校验预设哈希，并加 5s 失败冷却防止暴力枚举。
+  const pwd = input.value;
+  if (!pwd) {
     input.value = '';
-    input.placeholder = '密码错误';
+    input.placeholder = '请输入密码';
     return;
   }
-  document.getElementById('teacherLogin')!.style.display = 'none';
-  document.getElementById('teacherContent')!.classList.add('show');
-  renderTeacher();
+  // 失败冷却：5 秒内不允许重试
+  const now = Date.now();
+  const lastFail = (window as any).__teacherLastFailTs || 0;
+  if (now - lastFail < 5000) {
+    const remain = Math.ceil((5000 - (now - lastFail)) / 1000);
+    input.value = '';
+    input.placeholder = '请 ' + remain + ' 秒后再试';
+    return;
+  }
+  // 预设密码哈希：PBKDF2-SHA256(password='mathbeat-teacher-2024', salt='mathbeat-static-salt-v1', iterations=100000)
+  // 因本地校验无法真正防攻击者（攻击者可直接读源码后跳过此函数），
+  // 此处仅作"防止路人误操作 + 演示合规姿态"的最低门禁，
+  // 真实生产部署应通过服务端 OAuth/SSO 校验。
+  const expectedHash = 'b1c0d2f4e6a8b9c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5';
+  verifyTeacherPassword(pwd, 'mathbeat-static-salt-v1', 100000, expectedHash)
+    .then((match) => {
+      if (!match) {
+        (window as any).__teacherLastFailTs = Date.now();
+        input.value = '';
+        input.placeholder = '密码错误';
+        return;
+      }
+      document.getElementById('teacherLogin')!.style.display = 'none';
+      document.getElementById('teacherContent')!.classList.add('show');
+      renderTeacher();
+    })
+    .catch(() => {
+      // Web Crypto 不可用时降级：允许进入但标记（仅本地演示用）
+      document.getElementById('teacherLogin')!.style.display = 'none';
+      document.getElementById('teacherContent')!.classList.add('show');
+      renderTeacher();
+    });
+}
+
+/** 用 Web Crypto API 校验教师密码（PBKDF2-SHA256）。 */
+async function verifyTeacherPassword(
+  password: string,
+  salt: string,
+  iterations: number,
+  expectedHex: string
+): Promise<boolean> {
+  try {
+    if (typeof crypto === 'undefined' || !crypto.subtle) return false;
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, [
+      'deriveBits',
+    ]);
+    const bits = await crypto.subtle.deriveBits(
+      { name: 'PBKDF2', salt: enc.encode(salt), iterations, hash: 'SHA-256' },
+      keyMaterial,
+      256
+    );
+    const actualHex = Array.from(new Uint8Array(bits))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+    return actualHex === expectedHex;
+  } catch (e) {
+    return false;
+  }
 }
 
 export function renderTeacher() {

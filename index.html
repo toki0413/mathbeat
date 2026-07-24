@@ -5,6 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>数律 MathBeat</title>
     <link rel="manifest" href="manifest.json" />
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/32x32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/192x192.png" />
+    <!-- PWA / iOS 兼容 meta（installable 必备） -->
+    <meta name="theme-color" content="#ff8c42" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="MathBeat" />
+    <link rel="apple-touch-icon" href="icons/256x256.png" />
+    <!-- 安全：CSP 限制 script/style/img/media 来源，禁用外部域与 frame 嵌入。
+         注意：当前过渡阶段允许 'unsafe-inline' 脚本，因为 index.html 中仍有
+         30+ 个 inline onclick 待迁移到 data-action 委托。
+         迁移完成后应改为 script-src 'self' 严格策略。 -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' data: blob:; font-src 'self' data:; base-uri 'self'; form-action 'self'; object-src 'none';"
+    />
+    <!-- 注意：frame-ancestors / report-uri 等 CSP 指令无法通过 <meta> 生效，
+         必须由服务端响应头下发；此处留空，部署时在 Web 服务器配置
+         Content-Security-Policy 头补全 frame-ancestors 'none'。 -->
+    <meta name="referrer" content="no-referrer" />
+    <meta name="color-scheme" content="light dark" />
     <style>
       * {
         margin: 0;
@@ -3470,6 +3491,8 @@
     </style>
   </head>
   <body>
+    <!-- a11y: 跳过导航直达主内容（WCAG 2.4.1） -->
+    <a href="#homeScreen" class="skip-link" style="position:absolute;left:-9999px;top:0;z-index:99999;background:#000;color:#fff;padding:8px 16px;border-radius:0 0 8px 0;text-decoration:none" onfocus="this.style.left='0'" onblur="this.style.left='-9999px'">跳到主内容</a>
     <div id="loadingScreen">
       <div class="loading-title">数律</div>
       <div class="loading-sub">MATHBEAT</div>
@@ -3487,7 +3510,7 @@
     <canvas id="particleCanvas"></canvas>
     <div id="hitFlashOverlay" style="position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity 90ms ease-out;z-index:9999"></div>
 
-    <div id="homeScreen" class="screen active">
+    <div id="homeScreen" class="screen active" role="main" aria-label="主页">
       <div class="home-header">
         <div class="home-title" data-i18n="app.title">数律 MathBeat</div>
         <div class="home-sub" data-i18n="app.subtitle">数学 × 音乐</div>

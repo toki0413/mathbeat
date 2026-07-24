@@ -1836,20 +1836,28 @@ export function renderScienceCompositionList() {
   el.innerHTML =
     '<div class="science-composition-list">' +
     list
-      .map(
-        (c) =>
+      .map((c) => {
+        // 安全：type 字段必须走白名单查表 + escapeHtml 兜底，
+        // 防止存储型 XSS（c.type 可能来自被攻击者污染的存档导入）
+        const typeMap = ({ ...SCIENCE_TYPE_NAMES, ...SCIENCE_DEEP_TYPE_NAMES }) as Record<string, string>;
+        const safeType = typeMap[c.type] || '未知';
+        const safeName = escapeHtml(String(c.name || ''));
+        const safeDate = escapeHtml(String(new Date(c.date).toLocaleDateString('zh-CN')));
+        const safeId = escapeHtml(String(c.id));
+        return (
           '<div class="science-composition-item"><div><div class="name">' +
-          escapeHtml(c.name) +
+          safeName +
           '</div><div class="meta">' +
-          ((({ ...SCIENCE_TYPE_NAMES, ...SCIENCE_DEEP_TYPE_NAMES }) as Record<string, string>)[c.type] || c.type) +
+          safeType +
           ' · ' +
-          new Date(c.date).toLocaleDateString('zh-CN') +
+          safeDate +
           '</div></div><div class="actions"><button style="background:var(--science);color:#fff" data-action="loadScienceComposition" data-args=\'[' +
-          c.id +
+          safeId +
           ']\'">加载</button><button style="background:rgba(0,0,0,.06);color:var(--text)" data-action="deleteScienceComposition" data-args=\'[' +
-          c.id +
+          safeId +
           ']\'">删除</button></div></div>'
-      )
+        );
+      })
       .join('') +
     '</div>';
 }

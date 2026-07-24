@@ -1,15 +1,49 @@
 {
+  "id": "/?source=pwa",
   "name": "数律 MathBeat",
   "short_name": "MathBeat",
-  "start_url": ".",
+  "description": "数学与音乐的交叉探索 - 数学节奏教育游戏",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "portrait",
   "background_color": "#FFF8F0",
   "theme_color": "#FF8C42",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "categories": ["education", "music", "games"],
   "icons": [
-    { "src": "icons/32x32.png", "sizes": "32x32", "type": "image/png" },
-    { "src": "icons/128x128.png", "sizes": "128x128", "type": "image/png" },
-    { "src": "icons/256x256.png", "sizes": "256x256", "type": "image/png" }
+    { "src": "icons/32x32.png", "sizes": "32x32", "type": "image/png", "purpose": "any" },
+    { "src": "icons/128x128.png", "sizes": "128x128", "type": "image/png", "purpose": "any" },
+    { "src": "icons/256x256.png", "sizes": "256x256", "type": "image/png", "purpose": "any" },
+    { "src": "icons/256x256.png", "sizes": "256x256", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
-  "description": "数学与音乐的交叉探索",
-  "lang": "zh-CN"
+  "shortcuts": [
+    {
+      "name": "今日挑战",
+      "short_name": "挑战",
+      "description": "开始每日数学音乐挑战",
+      "url": "./?action=daily",
+      "icons": [{ "src": "icons/128x128.png", "sizes": "128x128" }]
+    },
+    {
+      "name": "无尽模式",
+      "short_name": "无尽",
+      "description": "挑战数学音乐无尽模式",
+      "url": "./?action=endless",
+      "icons": [{ "src": "icons/128x128.png", "sizes": "128x128" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/bgs/w1.svg",
+      "sizes": "480x900",
+      "type": "image/svg+xml",
+      "form_factor": "narrow",
+      "label": "MathBeat 主页与世界1"
+    }
+  ]
 }

@@ -278,6 +278,10 @@ export function setLang(lang: string) {
   if (translations[lang as keyof typeof translations]) {
     currentLang = lang;
     localSet(LS_KEYS.LANG, lang);
+    // 同步 <html lang> 属性，确保屏幕阅读器使用正确语音引擎（WCAG 3.1.1）
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = lang === 'en' ? 'en' : 'zh-CN';
+    }
     applyTranslations();
     if (typeof window !== 'undefined') {
       try {

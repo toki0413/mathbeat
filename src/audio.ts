@@ -91,29 +91,51 @@ export let masterMuteGain: GainNode | null = null;
 
 export function getAudioCtx(): AudioContext {
   if (!audioCtx) {
-    audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    masterCompressor = audioCtx.createDynamicsCompressor();
-    masterCompressor.threshold.value = -10;
-    masterCompressor.knee.value = 20;
-    masterCompressor.ratio.value = 6;
-    masterCompressor.attack.value = 0.003;
-    masterCompressor.release.value = 0.1;
-    masterGain = audioCtx.createGain();
-    masterGain.gain.value = Store.state.settings.masterVolume ?? 0.8;
-    analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 256;
-    bgmGain = audioCtx.createGain();
-    bgmGain.gain.value = 1.0;
-    masterMuteGain = audioCtx.createGain();
-    masterMuteGain.gain.value = 1.0;
-    // BGM sub-bus -> compressor -> mute gate -> master -> analyser -> destination
-    bgmGain.connect(masterCompressor);
-    masterCompressor.connect(masterMuteGain);
-    masterMuteGain.connect(masterGain);
-    masterGain.connect(analyser);
-    analyser.connect(audioCtx.destination);
+    try {
+      const Ctor = window.AudioContext || (window as any).webkitAudioContext;
+      if (!Ctor) {
+        throw new Error('Web Audio API not supported in this browser');
+      }
+      audioCtx = new Ctor();
+      masterCompressor = audioCtx.createDynamicsCompressor();
+      masterCompressor.threshold.value = -10;
+      masterCompressor.knee.value = 20;
+      masterCompressor.ratio.value = 6;
+      masterCompressor.attack.value = 0.003;
+      masterCompressor.release.value = 0.1;
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = Store.state.settings.masterVolume ?? 0.8;
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      bgmGain = audioCtx.createGain();
+      bgmGain.gain.value = 1.0;
+      masterMuteGain = audioCtx.createGain();
+      masterMuteGain.gain.value = 1.0;
+      // BGM sub-bus -> compressor -> mute gate -> master -> analyser -> destination
+      bgmGain.connect(masterCompressor);
+      masterCompressor.connect(masterMuteGain);
+      masterMuteGain.connect(masterGain);
+      masterGain.connect(analyser);
+      analyser.connect(audioCtx.destination);
+    } catch (e) {
+      // 浏览器禁用音频或 autoplay policy 阻塞时，向上抛出，由调用方决定降级策略
+      console.warn('[audio] Failed to create AudioContext:', e);
+      throw e;
+    }
   }
-  if (audioCtx.state === 'suspended') audioCtx.resume();
+  if (audioCtx && audioCtx.state === 'suspended') {
+    // resume() 返回 Promise，但调用方通常不需要 await（音频会异步恢复）
+    try {
+      const r = audioCtx.resume();
+      if (r && typeof (r as Promise<void>).catch === 'function') {
+        (r as Promise<void>).catch(() => {
+          /* 静默：autoplay policy 拒绝时等用户手势再试 */
+        });
+      }
+    } catch (e) {
+      /* noop */
+    }
+  }
   return audioCtx;
 }
 

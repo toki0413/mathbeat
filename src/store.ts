@@ -2,6 +2,7 @@ import { idbGet, idbSet, idbDelete, migrateFromLocalStorage } from './storage';
 import { t } from './i18n';
 import { showToast, showConfirm } from './ui-feedback';
 import { LS_KEYS } from './storage-keys';
+import { validateGameState, safeParseAndValidate } from './schema';
 
 export interface Settings {
   bgm: boolean;
@@ -336,10 +337,30 @@ export const Store: StoreAPI = {
       delete (stateCopy as unknown as Record<string, unknown>).scienceCompositions;
       localStorage.setItem(LS_KEYS.STATE, JSON.stringify(stateCopy));
     } catch (e) {
-      /* noop */
+      // localStorage 配额超限或被禁用时给出可见提示，避免进度静默丢失
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes('quota') || msg.includes('Quota') || msg.includes('QUOTA')) {
+        try {
+          showToast('存储空间不足，进度可能无法保存，请清理浏览器数据', 'error', 5000);
+        } catch (_) {
+          /* noop */
+        }
+      }
+      // 同时尝试将状态降级写 IndexedDB
+      try {
+        idbSet('mathbeat_state_fallback', this.state).catch(() => {});
+      } catch (_) {
+        /* noop */
+      }
     }
     if (this.state.scienceCompositions) {
-      idbSet('mathbeat_science_compositions', this.state.scienceCompositions).catch(function () {});
+      idbSet('mathbeat_science_compositions', this.state.scienceCompositions).catch(function () {
+        try {
+          showToast('科学作品存储失败（可能空间不足）', 'error', 3000);
+        } catch (_) {
+          /* noop */
+        }
+      });
     }
   },
 
@@ -425,13 +446,18 @@ export function importGameData(): void {
     const reader = new FileReader();
     reader.onload = function () {
       try {
-        const data = JSON.parse(reader.result as string);
-        if (!validateSaveData(data)) {
-          showToast(t('toast.save.import_invalid'), 'error');
+        const raw = reader.result as string;
+        // 严格 schema 校验：防止存储型 XSS 与崩溃型输入
+        // （旧实现仅校验 version/progress，scienceCompositions[].type 等字段
+        //  未净化就被 innerHTML 拼接，构成存储型 XSS 链）
+        const validated = safeParseAndValidate(raw, validateGameState);
+        if (!validated.ok || !validated.value) {
+          showToast(t('toast.save.import_invalid') + '：' + validated.errors.slice(0, 3).join('; '), 'error');
           return;
         }
-        runMigrations(data as Record<string, unknown>);
-        Store.state = Object.assign({}, DEFAULT_STATE, data);
+        const data = validated.value as unknown as Record<string, unknown>;
+        runMigrations(data);
+        Store.state = Object.assign({}, DEFAULT_STATE, data) as GameState;
         Store.save();
         showToast(t('toast.save.import_success'), 'success');
         setTimeout(() => window.location.reload(), 600);

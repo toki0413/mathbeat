@@ -4,6 +4,8 @@ import { SOUND_PACKS, DEFAULT_SOUND_PACK } from './sound-packs';
 import { MATH_VISUALS } from './math-visuals';
 import { renderConceptMap, CONCEPT_NODES, getConceptConnections } from './concept-map';
 import { getBossProblem } from './boss-problems';
+import { initA11y, installModalKeyboardHandlers, announce } from './a11y';
+import { installGlobalErrorHandlers, setConsoleMirror, reportError } from './error-report';
 
 import {
   Store,
@@ -415,6 +417,16 @@ function startHomeVisualizer() {
 }
 
 window.onload = function () {
+  // 初始化全局错误捕获与 a11y 基础设施（必须在所有其他逻辑之前）
+  try {
+    installGlobalErrorHandlers();
+    // 开发环境镜像错误到 console，便于调试
+    if (import.meta.env && import.meta.env.DEV) setConsoleMirror(true);
+    initA11y();
+    installModalKeyboardHandlers();
+  } catch (e) {
+    reportError(e, 'init global handlers');
+  }
   // 初始化事件委托，接管 data-action / data-input 的全局点击与输入监听
   initEventDelegation();
   startA11yObserver();
@@ -422,8 +434,25 @@ window.onload = function () {
   waveLab.initWaveLabEvents();
   Store.load();
   setSoundPack(Store.state.settings.soundPack || 'mathRock');
-  getAudioCtx();
-  loadEmbeddedSamples().catch(function () {});
+  try {
+    getAudioCtx();
+  } catch (e) {
+    reportError(e, 'getAudioCtx');
+  }
+  loadEmbeddedSamples().catch(function (e) {
+    reportError(e, 'loadEmbeddedSamples');
+    // 音频加载失败时给用户视觉提示
+    try {
+      const toast = document.createElement('div');
+      toast.className = 'toast error';
+      toast.setAttribute('role', 'alert');
+      toast.textContent = '⚠️ 音频加载失败，游戏可继续但可能无声';
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    } catch (_) {
+      /* noop */
+    }
+  });
   setTimeout(function () {
     document.getElementById('loadingScreen')!.classList.add('hidden');
     renderHome();

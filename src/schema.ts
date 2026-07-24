@@ -28,6 +28,13 @@ function isObject(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
 }
 
+/** 检测对象是否含原型污染危险键（__proto__/constructor/prototype） */
+function hasProtoPollutionKeys(obj: Record<string, unknown>): boolean {
+  return Object.keys(obj).some(
+    (k) => k === '__proto__' || k === 'constructor' || k === 'prototype'
+  );
+}
+
 function isString(v: unknown): v is string {
   return typeof v === 'string';
 }
@@ -89,6 +96,7 @@ export function validateCustomLevel(data: unknown): ValidationResult<{
   createdAt: string;
 }> {
   if (!isObject(data)) return fail('Expected object');
+  if (hasProtoPollutionKeys(data)) return fail('proto pollution keys detected');
   const d = data;
   if (!boundedString(d.name, 50)) return fail('name must be string ≤50 chars');
   if (!isInteger(d.worldId) || d.worldId < 1 || d.worldId > 8) return fail('worldId must be integer 1-8');
@@ -123,6 +131,7 @@ export function validateScienceComposition(data: unknown): ValidationResult<{
   data?: unknown;
 }> {
   if (!isObject(data)) return fail('Expected object');
+  if (hasProtoPollutionKeys(data)) return fail('proto pollution keys detected');
   const d = data;
   if (!boundedString(d.name, 100)) return fail('name must be string ≤100 chars');
   // type 必须在白名单内（防止存储型 XSS：c.type 未净化就被 innerHTML 拼接）
@@ -142,11 +151,13 @@ export function validateComposition(data: unknown): ValidationResult<{
   [key: string]: unknown;
 }> {
   if (!isObject(data)) return fail('Expected object');
+  if (hasProtoPollutionKeys(data)) return fail('proto pollution keys detected');
   const d = data;
   if (d.sections !== undefined) {
     if (!Array.isArray(d.sections) || d.sections.length > 32) return fail('sections must be array ≤32');
     for (const sec of d.sections) {
       if (!isObject(sec)) return fail('section must be object');
+      if (hasProtoPollutionKeys(sec)) return fail('section contains proto pollution keys');
       if (sec.name !== undefined && !boundedString(sec.name, 50)) return fail('section.name must be string ≤50');
       if (sec.cnName !== undefined && !boundedString(sec.cnName, 50)) return fail('section.cnName must be string ≤50');
     }
@@ -160,6 +171,7 @@ export function validateComposition(data: unknown): ValidationResult<{
  */
 export function validateGameState(data: unknown): ValidationResult<GameState> {
   if (!isObject(data)) return fail('Expected object');
+  if (hasProtoPollutionKeys(data)) return fail('proto pollution keys detected');
   const d = data as Record<string, unknown>;
   const errors: string[] = [];
 
@@ -168,17 +180,24 @@ export function validateGameState(data: unknown): ValidationResult<GameState> {
   if (!isObject(d.progress)) errors.push('progress must be object');
   // progress 的 key 是关卡 id（如 "1-1"），value 是星数 0-3
   if (isObject(d.progress)) {
-    for (const [k, v] of Object.entries(d.progress)) {
-      if (!boundedString(k, 20)) {
-        errors.push('progress key too long: ' + k.slice(0, 20));
-        continue;
+    if (hasProtoPollutionKeys(d.progress)) {
+      errors.push('progress contains proto pollution keys');
+    } else {
+      for (const [k, v] of Object.entries(d.progress)) {
+        if (!boundedString(k, 20)) {
+          errors.push('progress key too long: ' + k.slice(0, 20));
+          continue;
+        }
+        if (!isInteger(v) || v < 0 || v > 3) errors.push('progress[' + k + '] must be integer 0-3');
       }
-      if (!isInteger(v) || v < 0 || v > 3) errors.push('progress[' + k + '] must be integer 0-3');
     }
   }
 
   // unlocks
   if (d.unlocks !== undefined && !isObject(d.unlocks)) errors.push('unlocks must be object');
+  if (d.unlocks !== undefined && isObject(d.unlocks) && hasProtoPollutionKeys(d.unlocks)) {
+    errors.push('unlocks contains proto pollution keys');
+  }
 
   // 数组类字段
   if (d.achievements !== undefined) {
@@ -231,6 +250,10 @@ export function validateGameState(data: unknown): ValidationResult<GameState> {
       for (const w of d.wrongAnswerHistory) {
         if (!isObject(w)) {
           errors.push('wrongAnswerRecord must be object');
+          continue;
+        }
+        if (hasProtoPollutionKeys(w)) {
+          errors.push('wrongAnswerRecord contains proto pollution keys');
           continue;
         }
         if (!isInteger(w.worldId)) errors.push('wrongAnswerRecord.worldId must be integer');

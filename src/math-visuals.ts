@@ -55,6 +55,18 @@ function createSlider(
   return input;
 }
 
+// 模块级 RAF 跟踪：记录每个使用 requestAnimationFrame 的可视化的取消回调。
+const rafControllers = new Map<string, () => void>();
+
+/**
+ * 停止所有由数学可视化启动的 requestAnimationFrame 循环。
+ * 供 main.ts 在切屏/卸载时调用，避免 RAF 永久运行导致内存泄漏。
+ */
+export function stopAllMathVisuals(): void {
+  rafControllers.forEach((cancel) => cancel());
+  rafControllers.clear();
+}
+
 export const MATH_VISUALS: Record<number, VisualConfig> = {
   1: {
     title: 'LCM 可视化：两条节奏轨道何时重合',
@@ -254,8 +266,20 @@ export const MATH_VISUALS: Record<number, VisualConfig> = {
       let freqA = 440,
         freqB = 660;
       let phase = 0;
+      let rafId: number | null = null;
+      let running = true;
+      // 重新渲染时先取消上一次未停止的 RAF，避免多条循环并存
+      rafControllers.get('visual-3')?.();
+      rafControllers.set('visual-3', () => {
+        running = false;
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+      });
 
       function draw() {
+        if (!running) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.strokeStyle = '#7C6BFF';
         ctx.lineWidth = 2;
@@ -299,7 +323,7 @@ export const MATH_VISUALS: Record<number, VisualConfig> = {
         }
         ctx.stroke();
         phase += 0.05;
-        requestAnimationFrame(draw);
+        rafId = requestAnimationFrame(draw);
       }
 
       const info = document.createElement('div');

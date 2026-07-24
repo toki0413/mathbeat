@@ -338,6 +338,12 @@ export const Store: StoreAPI = {
       const stateCopy = Object.assign({}, this.state);
       delete (stateCopy as unknown as Record<string, unknown>).scienceCompositions;
       localStorage.setItem(LS_KEYS.STATE, JSON.stringify(stateCopy));
+      // 影子备份：成功写入 localStorage 后，再写一份前一代副本到 IndexedDB，用于未来恢复
+      try {
+        idbSet('mathbeat_state_prev', stateCopy).catch(() => {});
+      } catch (_) {
+        /* noop */
+      }
     } catch (e) {
       // localStorage 配额超限或被禁用时给出可见提示，避免进度静默丢失
       const msg = e instanceof Error ? e.message : String(e);
@@ -375,7 +381,34 @@ export const Store: StoreAPI = {
         Object.assign(this.state, parsed);
       }
     } catch (e) {
-      /* noop */
+      // 存档损坏，尝试从 IndexedDB fallback 恢复（异步 fire-and-forget）
+      idbGet('mathbeat_state_fallback')
+        .then((fallback) => {
+          if (fallback && validateSaveData(fallback)) {
+            const parsed = fallback as Record<string, unknown>;
+            runMigrations(parsed);
+            Object.assign(this.state, parsed);
+            this.listeners.forEach((f) => f(this.state));
+            try {
+              showToast('存档已从备份恢复', 'info', 4000);
+            } catch (_) {
+              /* noop */
+            }
+          } else {
+            try {
+              showToast('存档读取失败，已重置为初始状态', 'error', 5000);
+            } catch (_) {
+              /* noop */
+            }
+          }
+        })
+        .catch(() => {
+          try {
+            showToast('存档读取失败，已重置为初始状态', 'error', 5000);
+          } catch (_) {
+            /* noop */
+          }
+        });
     }
     this._loadScienceFromIDB();
     try {
@@ -473,7 +506,7 @@ export function importGameData(): void {
 }
 
 export function exportGameData(): void {
-  const data = Object.assign({}, Store.state, { version: '1.0', exportedAt: new Date().toISOString() });
+  const data = Object.assign({}, Store.state, { version: CURRENT_SAVE_VERSION, exportedAt: new Date().toISOString() });
   const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -490,6 +523,24 @@ export function resetGameData(): void {
     showToast(t('toast.save.reset_done'), 'success');
     setTimeout(() => window.location.reload(), 600);
   });
+}
+
+/** 一键清除所有用户学习数据（隐私合规：用户数据删除权）。清除 localStorage/IndexedDB 相关键后重置为默认状态。 */
+export function purgeUserData(): void {
+  try {
+    localStorage.removeItem(LS_KEYS.STATE);
+  } catch (_) {
+    /* noop */
+  }
+  try {
+    idbDelete('mathbeat_state_fallback');
+    idbDelete('mathbeat_state_prev');
+    idbDelete('mathbeat_science_compositions');
+  } catch (_) {
+    /* noop */
+  }
+  Object.assign(Store.state, DEFAULT_STATE);
+  Store.listeners.forEach((f) => f(Store.state));
 }
 
 // 暴露 Store 到 window（供 e2e 测试与外部脚本访问用户进度）

@@ -15,6 +15,7 @@ let enabled = false;
 let transport: Transport | null = null;
 let unsubscribeStep: (() => void) | null = null;
 let rafId: number | null = null;
+let reducedMotion = false;
 
 // 待触发的节拍队列：{ time: 音频时钟触发时刻, step: 步号 }
 interface PendingBeat {
@@ -27,6 +28,16 @@ const MAX_PENDING = 64; // 防止泄漏：超过则丢弃最旧的
 // 视觉脉冲 DOM 元素
 let flashEl: HTMLDivElement | null = null;
 let dotEl: HTMLDivElement | null = null;
+
+function readReducedMotion(): boolean {
+  try {
+    return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false;
+  } catch (e) {
+    return false;
+  }
+}
 
 function ensureElements(): void {
   if (flashEl && document.body.contains(flashEl)) return;
@@ -110,6 +121,7 @@ function rafLoop(): void {
 
 export function enableVisualBeat(): void {
   if (enabled) return;
+  reducedMotion = readReducedMotion();
   enabled = true;
   ensureElements();
   try {
@@ -160,4 +172,59 @@ export function setVisualBeat(on: boolean): boolean {
   if (on) enableVisualBeat();
   else disableVisualBeat();
   return enabled;
+}
+
+/**
+ * 听障视觉反馈（WCAG 1.2.1）：在 correct/wrong/click 时提供视觉替代，
+ * 让听障用户能"看到"答题正误。不依赖 visualBeat 开关——总是可用，
+ * 调用前通过 ensureElements() 确保 DOM 元素存在。
+ */
+export function triggerVisualFeedback(type: 'correct' | 'wrong' | 'click'): void {
+  ensureElements();
+  if (!flashEl || !dotEl) return;
+  // 每次刷新，避免在未开启节拍模式（enableVisualBeat 未运行）时 reducedMotion 仍为初始 false
+  reducedMotion = readReducedMotion();
+
+  if (type === 'click') {
+    // 短暂高亮：仅 opacity 1→0.85，不放大、不 flash、不 announce（避免噪音）
+    dotEl.style.opacity = '1';
+    window.setTimeout(() => {
+      if (!dotEl) return;
+      dotEl.style.opacity = '0.85';
+    }, 140);
+    return;
+  }
+
+  const isCorrect = type === 'correct';
+  const color = isCorrect ? '#7bc67e' : '#e85d5d';
+  const flashColor = isCorrect
+    ? 'rgba(123,198,126,0.55)'
+    : 'rgba(232,93,93,0.55)';
+
+  if (reducedMotion) {
+    // 静态高亮：只改 dotEl 颜色，不放大、不 flash，但仍 announce（WCAG 2.3.3）
+    dotEl.style.background = color;
+  } else {
+    dotEl.style.background = color;
+    dotEl.style.transform = 'translateX(-50%) scale(2.0)';
+    dotEl.style.opacity = '1';
+    flashEl.style.boxShadow = 'inset 0 0 0 0 transparent';
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    flashEl.offsetHeight; // reflow
+    flashEl.style.boxShadow = 'inset 0 0 120px 24px ' + flashColor;
+
+    window.setTimeout(() => {
+      if (!flashEl || !dotEl) return;
+      flashEl.style.boxShadow = 'inset 0 0 0 0 transparent';
+      dotEl.style.transform = 'translateX(-50%) scale(1)';
+      dotEl.style.opacity = '0.85';
+      dotEl.style.background = '#ff8c42';
+    }, 140);
+  }
+
+  try {
+    announce(isCorrect ? '答对' : '答错', 'assertive');
+  } catch (e) {
+    /* ignore */
+  }
 }

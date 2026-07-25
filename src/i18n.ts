@@ -1,6 +1,6 @@
 // MathBeat i18n - Internationalization support (Chinese / English)
 
-const translations = {
+export const translations = {
   zh: {
     // Home
     'app.title': 'MathBeat',

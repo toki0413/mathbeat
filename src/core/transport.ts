@@ -134,7 +134,8 @@ export function createTransport(ctx: AudioContext, bpm = 120, stepsPerBeat = 4):
 
 /** 停止并清空所有活跃 Transport */
 export function stopAllTransports(): void {
-  activeTransports.forEach((t) => t.stop());
+  // 复制数组：stop() 内部会 splice activeTransports，直接 forEach 会跳过元素
+  [...activeTransports].forEach((t) => t.stop());
   activeTransports.length = 0;
 }
 

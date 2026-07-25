@@ -367,7 +367,7 @@ function renderLearningInsights(): void {
 }
 
 function renderWeakPointsTab(): void {
-  const body = document.getElementById('liWeakPoints');
+  const body = document.getElementById('liPanelWeakPoints');
   if (!body) return;
   const wps = identifyWeakPoints();
   if (wps.length === 0) {
@@ -406,7 +406,7 @@ function renderWeakPointsTab(): void {
 }
 
 function renderWrongAnswerBook(): void {
-  const body = document.getElementById('liWrongAnswers');
+  const body = document.getElementById('liPanelWrongAnswers');
   if (!body) return;
   const wrongs = (Store.state.wrongAnswerHistory || []).slice().reverse(); // 最新在前
   if (wrongs.length === 0) {
@@ -437,7 +437,7 @@ function renderWrongAnswerBook(): void {
 }
 
 function renderLearningCurveTab(): void {
-  const body = document.getElementById('liCurve');
+  const body = document.getElementById('liPanelCurve');
   if (!body) return;
   const data = getLearningCurve(20);
   const avg = data.length > 0 ? (data.reduce((s, d) => s + d.stars, 0) / data.length).toFixed(2) : '—';

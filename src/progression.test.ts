@@ -21,6 +21,15 @@ vi.mock('./events', () => ({ registerActions: vi.fn() }));
 vi.mock('./ui-feedback', () => ({ showToast: vi.fn() }));
 vi.mock('./fx/particles', () => ({ spawnConfetti: vi.fn() }));
 
+// 固定时间为周三，避免周末 2 倍 XP 倍率干扰断言
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-07-22T12:00:00Z')); // 周三
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 function resetStore() {
   Store.state = JSON.parse(JSON.stringify(DEFAULT_STATE));
   Store.listeners = [];

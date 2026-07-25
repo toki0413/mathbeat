@@ -17,8 +17,8 @@ test.describe('可访问性自动化扫描', () => {
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa'])
       .analyze();
-    // 允许少量已知问题（contrast 在动态生成的元素上可能仍有问题），先设为 <= 5
-    expect(results.violations.length).toBeLessThanOrEqual(5);
+    // 阈值收紧至 <=2（动态内容可能仍有少量 contrast 问题，暂不要求 0）
+    expect(results.violations.length).toBeLessThanOrEqual(2);
   });
 
   test('设置面板无 WCAG 违规', async ({ page }) => {
@@ -29,6 +29,26 @@ test.describe('可访问性自动化扫描', () => {
       .withTags(['wcag2a', 'wcag2aa'])
       .include('#settingsScreen')
       .analyze();
+    expect(results.violations.length).toBeLessThanOrEqual(1);
+  });
+
+  test('关卡内无 WCAG 违规', async ({ page }) => {
+    await page.evaluate(() => { (window as any).startLevel?.(1, '1-1'); });
+    await page.waitForSelector('#gameScreen.active', { timeout: 5000 });
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa'])
+      .include('#gameScreen')
+      .analyze();
     expect(results.violations.length).toBeLessThanOrEqual(3);
+  });
+
+  test('成就页无 WCAG 违规', async ({ page }) => {
+    await page.evaluate(() => { (window as any).openAchievements?.(); });
+    await page.waitForSelector('#achievementsScreen.active', { timeout: 5000 });
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa'])
+      .include('#achievementsScreen')
+      .analyze();
+    expect(results.violations.length).toBeLessThanOrEqual(2);
   });
 });

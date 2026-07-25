@@ -47,16 +47,17 @@ export default defineConfig({
     globals: true,
     environment: 'happy-dom',
     include: ['src/**/*.test.ts'],
-    // 覆盖率配置：阈值设低（40%）因当前覆盖率低，避免立即失败
+    // 覆盖率配置：阈值已提升至产业级过渡值（全局 75%+）
+    // 后续可进一步收紧到 80%+ 以匹配严格产业级标准
     // 注意：需安装 @vitest/coverage-v8 才能实际运行（当前未安装，配置先就位）
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
       reportsDirectory: './coverage',
-      lines: 40,
-      functions: 40,
-      branches: 30,
-      statements: 40
+      lines: 75,
+      functions: 75,
+      branches: 75,
+      statements: 75
     }
   }
 })

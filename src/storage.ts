@@ -73,7 +73,9 @@ export async function idbGet(key: string): Promise<any> {
 export async function idbSet(key: string, value: any): Promise<boolean> {
   if (useFallback) {
     try {
-      localStorage.setItem(key, JSON.stringify(value));
+      const serialized = JSON.stringify(value);
+      if (serialized === undefined) return false;
+      localStorage.setItem(key, serialized);
       return true;
     } catch (e) {
       return false;
@@ -82,7 +84,9 @@ export async function idbSet(key: string, value: any): Promise<boolean> {
   const db = await openDB();
   if (!db) {
     try {
-      localStorage.setItem(key, JSON.stringify(value));
+      const serialized = JSON.stringify(value);
+      if (serialized === undefined) return false;
+      localStorage.setItem(key, serialized);
       return true;
     } catch (e) {
       return false;
@@ -136,7 +140,9 @@ export function localGet<T = any>(key: string, fallback?: T): T {
 
 export function localSet(key: string, value: any): boolean {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    const serialized = JSON.stringify(value);
+    if (serialized === undefined) return false;
+    localStorage.setItem(key, serialized);
     return true;
   } catch (e) {
     return false;
